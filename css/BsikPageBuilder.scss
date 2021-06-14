@@ -1,16 +1,47 @@
 /** Theme settings ********************************************/
 
+$sikbuilder-pri-color: rgb(34, 34, 34);
+$sikbuilder-sec-color: rgb(255, 180, 95);
+$sikbuilder-background: white;
 $sikbuilder-base-width: 1000px;
 $sikbuilder-base-height: 600px;
 $sikbuilder-base-margin: 25px auto;
-$sikbuilder-color: rgb(34, 34, 34);
-$sikbuilder-background: white;
 $sikbuilder-app-border-color: #cacaca;
-$sikbuilder-workingheader-background: lighten($sikbuilder-color, 60%);
+$sikbuilder-workingheader-background: lighten($sikbuilder-pri-color, 60%);
 $sikbuilder-workingheader-size: 14px;
-$sikbuilder-workingheader-color: lighten($sikbuilder-color, 30%);
+$sikbuilder-workingheader-color: lighten($sikbuilder-pri-color, 30%);
 $sikbuilder-controls-width: 35px;
+$sikbuilder-controls-size: 16px;
+$sikbuilder-controls-hover-bg: lighten($sikbuilder-sec-color, 20%);
+$sikbuilder-controls-selected-bg: lighten($sikbuilder-sec-color, 5%);
 
+
+/** Theme mixins *******************************************/
+@mixin disable-user-selection {
+    -webkit-touch-callout: none; /* iOS Safari */
+    -webkit-user-select: none;   /* Safari */
+    -khtml-user-select: none;    /* Konqueror HTML */
+    -moz-user-select: none;      /* Firefox */
+    -ms-user-select: none;       /* Internet Explorer/Edge */
+    user-select: none;           /* Non-prefixed version, currently supported by Chrome and Opera */
+}
+@mixin reset-list-style {
+    font-size: 0;
+    list-style: none;   // Remove bullets
+    margin: 0;          // Remove margin
+    padding: 0;         // Remove padding
+    /* SH: added - 2021-06-14 => Li still is display block style ... */
+}
+@mixin controls-hover($bg) {
+    &:hover {
+        background-color: $bg;
+    }
+}
+@mixin controls-selected($bg) {
+    &.selected {
+        background-color: $bg;
+    }
+}
 /** Theme rules ********************************************/
 
 .sik-builder {
@@ -18,56 +49,53 @@ $sikbuilder-controls-width: 35px;
     flex-direction: column;
     align-content: flex-start;
     position: relative;
-    color: $sikbuilder-color;
+    color: $sikbuilder-pri-color;
     background-color: $sikbuilder-background;
     width: $sikbuilder-base-width;
     height: $sikbuilder-base-height;
     margin: $sikbuilder-base-margin;
     padding-left: $sikbuilder-controls-width;
     >.controls {
+        @include reset-list-style;
         box-sizing: border-box;
         position: absolute;
-        list-style: none;
-        left: 0px;
-        top: $sikbuilder-controls-width;
-        margin: 0;
-        padding: 0;
+        left: 0;
+        top: 0;
         width: $sikbuilder-controls-width;
         border: 1px solid $sikbuilder-app-border-color;
-        border-right: 0px;
-        border-bottom: 0px;
+        border-right: 0;
+        border-bottom: 0;
+        @include disable-user-selection;
         >li {
+            font-size: $sikbuilder-controls-size;
             box-sizing: border-box;
             cursor: pointer;
             line-height: $sikbuilder-controls-width;
             text-align: center;
             border-bottom: 1px solid $sikbuilder-app-border-color;
-            &:hover {
-                background-color: #e7e7e7;
-            }
+            @include controls-hover($sikbuilder-controls-hover-bg);
+            @include controls-selected($sikbuilder-controls-selected-bg);
         }
     }
     >.working-controls {
+        @include disable-user-selection;
         >.sub-controls {
             display: none;
             box-sizing: border-box;
-            list-style: none;
-            margin: 0;
-            padding: 0;
-            height: $sikbuilder-controls-width;
+            @include reset-list-style;
             border: 1px solid $sikbuilder-app-border-color;
-            border-bottom: 0px;
+            border-top: 0px;
             >li {
                 display: inline-block;
                 width: $sikbuilder-controls-width;
                 box-sizing: border-box;
+                font-size: $sikbuilder-controls-size;
                 cursor: pointer;
                 line-height: $sikbuilder-controls-width;
                 text-align: center;
                 border-right: 1px solid $sikbuilder-app-border-color;
-                &:hover {
-                    background-color: #e7e7e7;
-                }
+                @include controls-hover($sikbuilder-controls-hover-bg);
+                @include controls-selected($sikbuilder-controls-selected-bg);
             }
         }
     }
@@ -79,7 +107,6 @@ $sikbuilder-controls-width: 35px;
         vertical-align: baseline;
         padding: 0px 10px 2px 10px;
         border: 1px solid $sikbuilder-app-border-color;
-        border-bottom: 0px;
     }
     >.builder-document {
         width: 100%;
