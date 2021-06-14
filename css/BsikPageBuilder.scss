@@ -14,7 +14,9 @@ $sikbuilder-controls-width: 35px;
 $sikbuilder-controls-size: 16px;
 $sikbuilder-controls-hover-bg: lighten($sikbuilder-sec-color, 20%);
 $sikbuilder-controls-selected-bg: lighten($sikbuilder-sec-color, 5%);
-
+$sikbuilder-subcontrols-size: 12px;
+$sikbuilder-subcontrols-hover-bg: lighten($sikbuilder-sec-color, 20%);
+$sikbuilder-subcontrols-selected-bg: lighten($sikbuilder-sec-color, 5%);
 
 /** Theme mixins *******************************************/
 @mixin disable-user-selection {
@@ -87,15 +89,18 @@ $sikbuilder-controls-selected-bg: lighten($sikbuilder-sec-color, 5%);
             border-top: 0px;
             >li {
                 display: inline-block;
-                width: $sikbuilder-controls-width;
+                padding:0 15px;
                 box-sizing: border-box;
-                font-size: $sikbuilder-controls-size;
+                font-size: $sikbuilder-subcontrols-size;
                 cursor: pointer;
                 line-height: $sikbuilder-controls-width;
                 text-align: center;
-                border-right: 1px solid $sikbuilder-app-border-color;
-                @include controls-hover($sikbuilder-controls-hover-bg);
-                @include controls-selected($sikbuilder-controls-selected-bg);
+                // border-right: 1px solid $sikbuilder-app-border-color;
+                @include controls-hover($sikbuilder-subcontrols-hover-bg);
+                @include controls-selected($sikbuilder-subcontrols-selected-bg);
+                >i {
+                    margin-right: 4px;
+                }
             }
         }
     }

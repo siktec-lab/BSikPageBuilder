@@ -74,17 +74,18 @@
       border-top: 0px; }
       .sik-builder > .working-controls > .sub-controls > li {
         display: inline-block;
-        width: 35px;
+        padding: 0 15px;
         box-sizing: border-box;
-        font-size: 16px;
+        font-size: 12px;
         cursor: pointer;
         line-height: 35px;
-        text-align: center;
-        border-right: 1px solid #cacaca; }
+        text-align: center; }
         .sik-builder > .working-controls > .sub-controls > li:hover {
           background-color: #ffe4c5; }
         .sik-builder > .working-controls > .sub-controls > li.selected {
           background-color: #ffc079; }
+        .sik-builder > .working-controls > .sub-controls > li > i {
+          margin-right: 4px; }
   .sik-builder > .working-header {
     width: 100%;
     color: #6f6f6f;

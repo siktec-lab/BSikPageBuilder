@@ -18,9 +18,10 @@ version:
             libraries: ["Bootstrap v.5.0.1"],
             viewTogglerClass: "builder_show",
             handlers: {
-                addContainer: function(el) {
+                addElement: function(el, which) {
                     let _to = this.currentWorking();
-                    return this.addElement("container", _to);
+                    console.log("adding", which);
+                    return this.addElement(which, _to);
                 },
                 toggleView: function(el) {
                     return this.toggleBuilderStyleView();
@@ -34,13 +35,18 @@ version:
         self.settings = {};
         let registeredLibraries = {
             "Bootstrap v.5.0.1": "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
-        }
+        };
         let elements = {
             tagging: "<div class='sik_tagging'><span class='sik_tag_name'></span></div>",
-            container: "<div class='struct_ele container'><div>",
-            containerFluid: "<div class='struct_ele container-fluid'><div>",
-            row: "<div class='struct_ele row'><div>",
-            col: "<div class='struct_ele col'><div>"
+            container: "<div class='struct_ele container'></div>",
+            containerFluid: "<div class='struct_ele container-fluid'></div>",
+            row: "<div class='struct_ele row'></div>",
+            col: "<div class='struct_ele col'></div>",
+            header: "<h1 class='struct_ele'></h1>",
+            paragraph: "<p class='struct_ele'></p>",
+            span: "<span class='struct_ele'></span>",
+            list: "<ul class='struct_ele'><li class='struct_ele'></li></ul>",
+            image: "<img src='' class='struct_ele '/>"
         };
         let documentStyle = [
             "body { padding: 20px; }",
@@ -48,7 +54,7 @@ version:
             ".struct_ele:hover {outline:1px solid blue;}",
             ".struct_ele.active_working {outline:2px solid blue;}",
             ".struct_ele .sik_tagging {font-size: 10px; color: #878787; vertical-align: text-top;}"
-        ]
+        ];
         self.workingOn = "";
         // init
         init = function() {
@@ -86,15 +92,48 @@ version:
         };
         self.addElement = function(element = "container", _to = "") {
             let $to = _to != "" ? $(_to) : self.$doc;
+            let $appended = null;
             switch (element) {
                 case "container":
-                    console.log("adding container", $to);
-                    let $appended = $(elements.container).appendTo($to);
+                    $appended = $(elements.container).appendTo($to);
                     tagElement($appended, "container");
-                    break;
+                break;
+                case "container-fluid":
+                    $appended = $(elements.containerFluid).appendTo($to);
+                    tagElement($appended, "fluid");
+                break;
+                case "row":
+                    $appended = $(elements.row).appendTo($to);
+                    tagElement($appended, "row");
+                break;
+                case "col":
+                    $appended = $(elements.col).appendTo($to);
+                    tagElement($appended, "col");
+                break;
+                case "header":
+                    $appended = $(elements.header).appendTo($to);
+                    tagElement($appended, "header");
+                break;
+                case "paragraph":
+                    $appended = $(elements.paragraph).appendTo($to);
+                    tagElement($appended, "para");
+                break;
+                case "span":
+                    $appended = $(elements.span).appendTo($to);
+                    tagElement($appended, "span");
+                break;
+                case "list":
+                    $appended = $(elements.list).appendTo($to);
+                    tagElement($appended, "list");
+                break;
+                case "image":
+                    $appended = $(elements.image).appendTo($to);
+                    //tagElement($appended, "image");
+                break;
             }
             return;
         };
+
         self.toggleBuilderStyleView = function(view = "toggle") {
             switch (view) {
                 case "show":
@@ -111,6 +150,7 @@ version:
                     break;
             }
         };
+
         self.toggleSubControl = function(from, which) {
             let toShow = self.$subControlsGroups.filter("[data-name='" + which + "']");
             //console.log(which, self.$subControlsGroups.length, toShow.length);
@@ -160,7 +200,7 @@ version:
                 $(this).on("click", function() {
                     let handler = self.settings.handlers[$(this).data("run")];
                     let params = $(this).clone().data("params") ?? [];
-                    console.log(params);
+                    //console.log(params);
                     if (typeof handler === "function") {
                         params.unshift(this);
                         handler.apply(self, params);
@@ -171,8 +211,9 @@ version:
             self.$subControls.each(function() {
                 $(this).on("click", function() {
                     let handler = self.settings.handlers[$(this).data("run")];
-                    let params = $(this).data("params") ?? [];
+                    let params = $(this).clone().data("params") ?? [];
                     if (typeof handler === "function")
+                        params.unshift(this);
                         handler.apply(self, params);
                 });
             });
