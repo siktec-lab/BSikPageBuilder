@@ -216,6 +216,10 @@ version:
         };
         attachDocumentEvents = function() {
             //Selecting elements for edits:
+            self.$doc.on("click", function(){
+                self.workingOn = self.$doc;
+                self.$doc.find(".struct-ele").removeClass("active-working");
+            });
             self.$doc.on("click", ".struct-ele", function(ev) {
                 ev.stopPropagation();
                 self.workingOn = $(this);
