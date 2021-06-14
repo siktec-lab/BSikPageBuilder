@@ -49,6 +49,13 @@
         background-color: #ffe4c5; }
       .sik-builder > .controls > li.selected {
         background-color: #ffc079; }
+    .sik-builder > .controls > li.disabled-control {
+      cursor: default;
+      color: #888888; }
+      .sik-builder > .controls > li.disabled-control:hover {
+        background-color: transparent; }
+      .sik-builder > .controls > li.disabled-control.selected {
+        background-color: transparent; }
   .sik-builder > .working-controls {
     -webkit-touch-callout: none;
     /* iOS Safari */

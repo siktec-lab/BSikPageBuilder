@@ -18,16 +18,30 @@ version:
             libraries: ["Bootstrap v.5.0.1", "core"],
             viewTogglerClass: "builder-show",
             handlers: {
+                copyElement: function(el) {
+                    let cop = this.currentWorking();
+                    return this.copyElement(el, cop);
+                },
+                cropElement: function(el) {
+                    let cop = this.currentWorking();
+                    return this.cropElement(el, cop);
+                },
+                pasteElement: function(el) {
+                    let pas = this.currentWorking();
+                    return this.pasteElement(el, pas);
+                },
+                removeElement: function(el) {
+                    let rem = this.currentWorking();
+                    return this.removeElement(el, rem);
+                },
                 addElement: function(el, which) {
                     let _to = this.currentWorking();
-                    console.log("adding", which);
                     return this.addElement(which, _to);
                 },
                 toggleView: function(el) {
                     return this.toggleBuilderStyleView();
                 },
                 subControl: function(el, sub) {
-                    //console.log(el, sub);
                     return this.toggleSubControl(el, sub);
                 }
             }
@@ -51,7 +65,9 @@ version:
         };
         let documentStyle = [
         ];
+        let clipboard = null;
         self.workingOn = "";
+        
         // init
         init = function() {
             //Expend settings:
@@ -84,7 +100,58 @@ version:
         };
         // public methods
         self.currentWorking = function() {
-            return self.workingOn;
+            return self.workingOn != "" && self.workingOn ? self.workingOn : null;
+        };
+        self.copyElement = function(by, _ele) {
+            let ele = $(_ele);
+            if (ele.hasClass("struct-ele")) {
+                setClipboard(ele.clone(true).removeClass("active-working"),"copy");
+            }
+        };
+        self.cropElement = function(by, _ele) {
+            let ele = $(_ele);
+            if (ele.hasClass("struct-ele")) {
+                setClipboard(ele.detach().removeClass("active-working"), "crop");
+            }
+        };
+        let setClipboard = function(data, event) {
+            let pasteCommads = self.$controls.filter("[data-run='pasteElement']");
+            if (event != "erase") {
+                clipboard = { 
+                    el : data, 
+                    ev : event 
+                };
+                pasteCommads.removeClass("disabled-control");
+            } else {
+                clipboard = null;
+                pasteCommads.addClass("disabled-control");
+            }
+        }
+        self.pasteElement = function(by, $toEle) {
+            if (clipboard && $toEle) {
+                if (clipboard.ev == "crop") {
+                    $toEle.append(clipboard.el);
+                    clipboard.el.trigger("click");
+                    setClipboard(null, "erase");
+                } else {
+                    $toEle.append(clipboard.el.clone(true));
+                }
+            }
+        };
+        self.removeElement = function(by, _rem) {
+            let rem = $(_rem);
+            if (rem.hasClass("struct-ele")) {
+                let structNext   = rem.parent().find(">.struct-ele").not(rem);
+                let structParent = rem.parent().closest(".struct-ele");
+                rem.remove();
+                if (structNext.length) {
+                    structNext.eq(0).trigger("click");
+                } else if (structParent.length) {
+                    structParent.trigger("click");
+                } else {
+                    self.$doc.trigger("click");
+                }
+            }
         };
         self.addElement = function(element = "container", _to = "") {
             let $to = _to != "" ? $(_to) : self.$doc;
@@ -133,15 +200,12 @@ version:
         self.toggleBuilderStyleView = function(view = "toggle") {
             switch (view) {
                 case "show":
-                    console.log("showing builder styles");
                     self.$frame.find("html").addClass(self.settings.viewTogglerClass);
                     break;
                 case "hide":
-                    console.log("hiding builder styles");
                     self.$frame.find("html").removeClass(self.settings.viewTogglerClass);
                     break;
                 case "toggle":
-                    console.log("toggle builder styles");
                     self.$frame.find("html").toggleClass(self.settings.viewTogglerClass);
                     break;
             }
@@ -149,7 +213,6 @@ version:
 
         self.toggleSubControl = function(from, which) {
             let toShow = self.$subControlsGroups.filter("[data-name='" + which + "']");
-            //console.log(which, self.$subControlsGroups.length, toShow.length);
             if (toShow.length) {
                 self.$subControlsGroups.not(toShow).hide();
                 self.$controls.filter("[data-run='subControl']").removeClass("selected");

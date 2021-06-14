@@ -78,6 +78,12 @@ $sikbuilder-subcontrols-selected-bg: lighten($sikbuilder-sec-color, 5%);
             @include controls-hover($sikbuilder-controls-hover-bg);
             @include controls-selected($sikbuilder-controls-selected-bg);
         }
+        >li.disabled-control {
+            cursor: default;
+            color: lighten($sikbuilder-pri-color, 40%);
+            @include controls-hover(transparent);
+            @include controls-selected(transparent);
+        }
     }
     >.working-controls {
         @include disable-user-selection;
