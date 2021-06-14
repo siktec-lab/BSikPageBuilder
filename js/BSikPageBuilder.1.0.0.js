@@ -15,8 +15,8 @@ version:
         let self, init, privateMethod;
         self = this;
         self.defaults = {
-            libraries: ["Bootstrap v.5.0.1"],
-            viewTogglerClass: "builder_show",
+            libraries: ["Bootstrap v.5.0.1", "core"],
+            viewTogglerClass: "builder-show",
             handlers: {
                 addElement: function(el, which) {
                     let _to = this.currentWorking();
@@ -34,26 +34,22 @@ version:
         };
         self.settings = {};
         let registeredLibraries = {
+            "core":"css/BsikPageBuilderIframe.css",
             "Bootstrap v.5.0.1": "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
         };
         let elements = {
-            tagging: "<div class='sik_tagging'><span class='sik_tag_name'></span></div>",
-            container: "<div class='struct_ele container'></div>",
-            containerFluid: "<div class='struct_ele container-fluid'></div>",
-            row: "<div class='struct_ele row'></div>",
-            col: "<div class='struct_ele col'></div>",
-            header: "<h1 class='struct_ele'></h1>",
-            paragraph: "<p class='struct_ele'></p>",
-            span: "<span class='struct_ele'></span>",
-            list: "<ul class='struct_ele'><li class='struct_ele'></li></ul>",
-            image: "<img src='' class='struct_ele '/>"
+            tagging: "<div class='sik-tagging'></div>",
+            container: "<div class='struct-ele container'></div>",
+            containerFluid: "<div class='struct-ele container-fluid'></div>",
+            row: "<div class='struct-ele row'></div>",
+            col: "<div class='struct-ele col'></div>",
+            header: "<h1 class='struct-ele'></h1>",
+            paragraph: "<p class='struct-ele'></p>",
+            span: "<span class='struct-ele'></span>",
+            list: "<ul class='struct-ele'><li class='struct-ele'></li></ul>",
+            image: "<img src='' class='struct-ele '/>"
         };
         let documentStyle = [
-            "body { padding: 20px; }",
-            ".struct_ele { outline:1px solid #d1d8ff; min-height:35px; padding-bottom: 1px; margin-bottom:25px; }",
-            ".struct_ele:hover {outline:1px solid blue;}",
-            ".struct_ele.active_working {outline:2px solid blue;}",
-            ".struct_ele .sik_tagging {font-size: 10px; color: #878787; vertical-align: text-top;}"
         ];
         self.workingOn = "";
         // init
@@ -220,21 +216,21 @@ version:
         };
         attachDocumentEvents = function() {
             //Selecting elements for edits:
-            self.$doc.on("click", ".struct_ele", function(ev) {
+            self.$doc.on("click", ".struct-ele", function(ev) {
                 ev.stopPropagation();
                 self.workingOn = $(this);
-                self.$doc.find(".struct_ele").not(self.workingOn).removeClass("active_working");
-                self.workingOn.toggleClass("active_working");
+                self.$doc.find(".struct-ele").not(self.workingOn).removeClass("active-working");
+                self.workingOn.toggleClass("active-working");
             });
         };
         // private methods
         tagElement = function(_el, name = "") {
             let $el = $(_el);
-            let $tagging = $el.find(".sik_tagging");
+            let $tagging = $el.find(".sik-tagging");
             if (!$tagging.length)
                 $tagging = $(elements.tagging).appendTo($el);
-            if (name)
-                $tagging.find("span.sik_tag_name").text(name);
+            // if (name)
+            //     $tagging.find("span.sik_tag_name").text(name);
         };
 
         init();

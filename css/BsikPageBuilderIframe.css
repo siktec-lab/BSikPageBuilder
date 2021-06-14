@@ -1,0 +1,155 @@
+@use "sass:list";
+/** Theme settings ********************************************/
+/** Theme mixins *******************************************/
+/** Theme rules ********************************************/
+.struct-ele > .sik-tagging {
+  display: none;
+  position: relative;
+  padding: 0;
+  margin: 0; }
+  .struct-ele > .sik-tagging::after {
+    display: none;
+    position: absolute;
+    top: -19px;
+    left: -10px;
+    background-color: yellow;
+    content: 'element';
+    font-size: 10px;
+    color: #878787;
+    vertical-align: text-top; }
+
+div.container.struct-ele > .sik-tagging::after {
+  content: "container"; }
+
+div.container-fluid.struct-ele > .sik-tagging::after {
+  content: "fluid"; }
+
+div.col.struct-ele > .sik-tagging::after {
+  content: "column"; }
+
+div.row.struct-ele > .sik-tagging::after {
+  content: "row";
+  left: -8px; }
+
+h1.struct-ele > .sik-tagging::after {
+  content: "heading"; }
+
+h2.struct-ele > .sik-tagging::after {
+  content: "heading"; }
+
+h3.struct-ele > .sik-tagging::after {
+  content: "heading"; }
+
+h4.struct-ele > .sik-tagging::after {
+  content: "heading"; }
+
+h5.struct-ele > .sik-tagging::after {
+  content: "heading"; }
+
+h6.struct-ele > .sik-tagging::after {
+  content: "heading"; }
+
+p.struct-ele > .sik-tagging::after {
+  content: "paragraph"; }
+
+span.struct-ele > .sik-tagging::after {
+  content: "span"; }
+
+ul.struct-ele > .sik-tagging::after {
+  content: "list"; }
+
+img.struct-ele > .sik-tagging::after {
+  content: "image"; }
+
+.builder-show body {
+  padding: 20px; }
+.builder-show .struct-ele {
+  outline: 1px solid #bbc5ff; }
+  .builder-show .struct-ele:hover {
+    outline: 1px solid #2243ff; }
+  .builder-show .struct-ele.active-working {
+    outline: 2px solid #e64100; }
+  .builder-show .struct-ele .sik-tagging {
+    display: inline-block; }
+    .builder-show .struct-ele .sik-tagging::after {
+      display: inline-block; }
+
+.builder-show div.container.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-bottom: 5px;
+  margin-bottom: 10px; }
+
+.builder-show div.container-fluid.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-bottom: 5px;
+  margin-bottom: 10px; }
+
+.builder-show div.row.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-right: 0;
+  margin-bottom: 10px;
+  margin-left: 0; }
+
+.builder-show div.col.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+.builder-show h1.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+.builder-show h2.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+.builder-show h3.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+.builder-show h4.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+.builder-show h5.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+.builder-show h6.struct-ele {
+  min-height: 35px;
+  padding-top: 20px;
+  padding-right: 10px;
+  padding-bottom: 5px;
+  padding-left: 10px;
+  margin-bottom: 10px; }
+
+/*# sourceMappingURL=BsikPageBuilderIframe.css.map */

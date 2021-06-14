@@ -1,0 +1,153 @@
+
+@use "sass:list";
+/** Theme settings ********************************************/
+
+$element-outline-color: #2243ff;
+$element-outline-focused: 1px, #2243ff;
+$element-outline-blurred: 1px, lighten($element-outline-color, 30%);
+$element-outline-active: 2px,  #e64100;
+$element-debug-minheight: 35px;
+
+
+@function headings($from:1, $to:6, $with:'') {
+    @if $from == $to {
+        @return 'h#{$from}';
+    } @else {
+        @return 'h#{$from},' + headings($from+1, $to);
+    }
+}
+
+/** Theme mixins *******************************************/
+@mixin generate-content-tagging($of-eles, $content, $left:-1, $top:-1) {
+    @each $ele in $of-eles {
+        #{$ele}.struct-ele>.sik-tagging::after {
+            content: $content;
+            @if $top != -1 {
+                top: $top;
+            }
+            @if $left != -1 {
+                left: $left;
+            }
+        }
+    }
+}
+@mixin outline($size, $color) {
+    outline: $size solid $color;
+}
+@mixin smart-padding($top:-1, $right:-1, $bottom:-1, $left:-1) {
+    @if $top != -1 {
+        padding-top: $top;
+    }
+    @if $right != -1 {
+        padding-right: $right;
+    }
+    @if $bottom != -1 {
+        padding-bottom: $bottom;
+    }
+    @if $left != -1 {
+        padding-left: $left;
+    }
+}
+@mixin smart-margin($top:-1, $right:-1, $bottom:-1, $left:-1) {
+    @if $top != -1 {
+        margin-top: $top;
+    }
+    @if $right != -1 {
+        margin-right: $right;
+    }
+    @if $bottom != -1 {
+        margin-bottom: $bottom;
+    }
+    @if $left != -1 {
+        margin-left: $left;
+    }
+}
+@mixin generate-element-debug($of-eles, $height: -1, $minheight:-1, $padding:-1, $margin:-1) {
+    @each $ele in $of-eles {
+        .builder-show #{$ele}.struct-ele {
+            @if $height != -1 {
+                height: $height;
+            }
+            @if $minheight != -1 {
+                min-height:$minheight; 
+            }
+            @if $padding != -1 {
+                @include smart-padding($padding...);
+            }
+            @if $margin != -1 {
+                @include smart-margin($margin...);
+            }
+        }
+    }
+}
+
+/** Theme rules ********************************************/
+.struct-ele>.sik-tagging {
+    display:none;
+    position:relative;
+    padding:0;
+    margin:0; 
+    &::after { 
+        display:none; 
+        position: absolute;
+        top:-19px;
+        left:-10px;
+        background-color: yellow;
+        content:'element';
+        font-size: 10px;
+        color: #878787; 
+        vertical-align: text-top;
+    }
+}
+
+@include generate-content-tagging('div.container', 'container');
+@include generate-content-tagging('div.container-fluid', 'fluid');
+@include generate-content-tagging('div.col', 'column');
+@include generate-content-tagging('div.row', 'row', -8px, -1);
+@include generate-content-tagging([h1 h2 h3 h4 h5 h6], 'heading');
+@include generate-content-tagging('p', 'paragraph');
+@include generate-content-tagging('span', 'span');
+@include generate-content-tagging('ul', 'list');
+@include generate-content-tagging('img', 'image');
+
+.builder-show {
+    body {
+        padding: 20px; 
+    }
+    .struct-ele {
+        @include outline($element-outline-blurred...);
+        &:hover {
+            @include outline($element-outline-focused...);
+        }
+        &.active-working {
+            @include outline($element-outline-active...);
+        }
+        .sik-tagging {
+            display:inline-block;
+            &::after {
+                display:inline-block;
+            }
+        }
+    }
+}
+
+@include generate-element-debug('div.container', -1, 35px, 
+    20px -1 5px -1, 
+    -1 -1 10px -1
+);
+@include generate-element-debug('div.container-fluid', -1, 35px, 
+    20px -1 5px -1, 
+    -1 -1 10px -1
+);
+@include generate-element-debug('div.row', -1, 35px, 
+    20px 10px 5px 10px, 
+    -1 0 10px 0
+);
+@include generate-element-debug('div.col', -1, 35px, 
+    20px 10px 5px 10px, 
+    -1 -1 10px -1
+);
+@include generate-element-debug([h1 h2 h3 h4 h5 h6], -1, 35px, 
+    20px 10px 5px 10px, 
+    -1 -1 10px -1
+);

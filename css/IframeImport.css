@@ -1,0 +1,62 @@
+.struct_ele .sik_tagging {
+    display:none;
+    position:relative;
+    padding:0;
+    margin:0;
+}
+.struct_ele .sik_tagging::after {
+    display:none;
+    position: absolute;
+    top:-20px;
+    left:-15px;
+    background-color: yellow;
+    content:'element';
+    font-size: 10px;
+    color: #878787; 
+    vertical-align: text-top;
+}
+div.container.struct_ele>.sik_tagging::after {
+    content:'container';
+}
+div.container-fluid.struct_ele>.sik_tagging::after {
+    content:'fluid';
+}
+div.col.struct_ele>.sik_tagging::after {
+    content:'column';
+}
+div.row.struct_ele>.sik_tagging::after {
+    content:'row';
+}
+p.struct_ele>.sik_tagging::after {
+    content:'paragraph';
+}
+span.struct_ele>.sik_tagging::after {
+    content:'span';
+}
+ul.struct_ele>.sik_tagging::after {
+    content:'list';
+}
+img.struct_ele>.sik_tagging::after {
+    content:'image';
+}
+.builder_show body { 
+    padding: 20px; 
+}
+.builder_show .struct_ele { 
+    outline:1px solid #d1d8ff; 
+    min-height:35px; 
+    padding:20px 15px;
+    margin-bottom:10px;
+}
+.builder_show .struct_ele:hover {
+    outline:1px solid blue;
+}
+.builder_show .struct_ele.active_working {
+    outline:2px solid blue;
+}
+.builder_show .struct_ele .sik_tagging {
+    display:inline-block;
+}
+.builder_show .struct_ele .sik_tagging::after {
+    display:inline-block;
+}
