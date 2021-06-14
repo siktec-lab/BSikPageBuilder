@@ -1,0 +1,68 @@
+/** Theme settings ********************************************/
+/** Theme rules ********************************************/
+.sik-builder {
+  display: flex;
+  flex-direction: column;
+  align-content: flex-start;
+  position: relative;
+  color: #222222;
+  background-color: white;
+  width: 1000px;
+  height: 600px;
+  margin: 25px auto;
+  padding-left: 35px; }
+  .sik-builder > .controls {
+    box-sizing: border-box;
+    position: absolute;
+    list-style: none;
+    left: 0px;
+    top: 35px;
+    margin: 0;
+    padding: 0;
+    width: 35px;
+    border: 1px solid #cacaca;
+    border-right: 0px;
+    border-bottom: 0px; }
+    .sik-builder > .controls > li {
+      box-sizing: border-box;
+      cursor: pointer;
+      line-height: 35px;
+      text-align: center;
+      border-bottom: 1px solid #cacaca; }
+      .sik-builder > .controls > li:hover {
+        background-color: #e7e7e7; }
+  .sik-builder > .working-controls > .sub-controls {
+    display: none;
+    box-sizing: border-box;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    height: 35px;
+    border: 1px solid #cacaca;
+    border-bottom: 0px; }
+    .sik-builder > .working-controls > .sub-controls > li {
+      display: inline-block;
+      width: 35px;
+      box-sizing: border-box;
+      cursor: pointer;
+      line-height: 35px;
+      text-align: center;
+      border-right: 1px solid #cacaca; }
+      .sik-builder > .working-controls > .sub-controls > li:hover {
+        background-color: #e7e7e7; }
+  .sik-builder > .working-header {
+    width: 100%;
+    color: #6f6f6f;
+    background-color: #bbbbbb;
+    font-size: 14px;
+    vertical-align: baseline;
+    padding: 0px 10px 2px 10px;
+    border: 1px solid #cacaca;
+    border-bottom: 0px; }
+  .sik-builder > .builder-document {
+    width: 100%;
+    flex: 1;
+    border: 1px solid #cacaca;
+    border-top: 0px; }
+
+/*# sourceMappingURL=BsikPageBuilder.css.map */
