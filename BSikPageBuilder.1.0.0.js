@@ -9,15 +9,24 @@ version:
     ->initial
 *******************************************************************************/
 
-(function($) {
-
-    $.SikLayout = function(el, options) {
-        let self, init, privateMethod;
+;(function($) {
+    //Make sure assets are defined:
+    if (!$.hasOwnProperty("SikPageBuilder")) {
+        $.SikPageBuilder = {};
+        $.SikPageBuilder["languages"]   = {};
+        $.SikPageBuilder["elements"]    = {};
+    }
+    //The core plugin:
+    $.SikPageBuilder["build"] = function(el, options) {
+        let self, init;
         self = this;
         self.defaults = {
-            libraries: ["Bootstrap v.5.0.1", "core"],
-            viewTogglerClass: "builder-show",
-            languagePack : "english",
+            libraries:              ["Bootstrap v.5.0.1", "core"],
+            viewTogglerClass:       "builder-show",
+            elementBuilderClass:    "struct-ele",
+            elementTaggingClass:    "sik-tagging",
+            languagePack :          "english",
+            elementsPack :          "bootstrap5",
             handlers: {
                 copyElement: function(el) {
                     let cop = this.currentWorking();
@@ -35,15 +44,15 @@ version:
                     let rem = this.currentWorking();
                     return this.removeElement(el, rem);
                 },
-                addElement: function(el, which) {
+                addElement: function(el, group, which) {
                     let _to = this.currentWorking();
-                    return this.addElement(which, _to);
+                    return this.addElement(group, which, _to);
                 },
                 toggleView: function(el) {
                     return this.toggleBuilderStyleView();
                 },
-                subControl: function(el, sub) {
-                    return this.toggleSubControl(el, sub);
+                openToolbar: function(el, toolbar) {
+                    return this.toggleToolbar(el, toolbar);
                 }
             },
             style: {
@@ -53,60 +62,56 @@ version:
             }
         };
         self.settings = {};
-        let languages = {
-            english : {
-                messageBar : {
-                    workingOnMessage : "Selected:"
-                }
-                
-            }
-        }
         self.loadedLanguage = {};
         let registeredLibraries = {
             "core":"css/BsikPageBuilderIframe.css",
             "Bootstrap v.5.0.1": "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
         };
-        let elements = {
-            tagging: "<div class='sik-tagging'></div>",
-            container: "<div class='struct-ele container'></div>",
-            containerFluid: "<div class='struct-ele container-fluid'></div>",
-            row: "<div class='struct-ele row'></div>",
-            col: "<div class='struct-ele col'></div>",
-            header: "<h1 class='struct-ele'></h1>",
-            paragraph: "<p class='struct-ele'></p>",
-            span: "<span class='struct-ele'></span>",
-            list: "<ul class='struct-ele'><li class='struct-ele'></li></ul>",
-            image: "<img src='' class='struct-ele '/>"
+        self.elements       = {};
+        self.tmpl = {
+            taggingClass        : "sik-tagging",
+            tagging             : "<div class='%class%'>%tag%</div>",
+            elementBuilderClass : "struct-ele"
         };
-        let documentStyle = [
-        ];
-        let clipboard = null;
-        self.workingOn = "";
+        let documentStyle   = [];
+        let clipboard       = null;
+        self.workingOn      = "";
         
+        self.$controls      = $([]);
+        self.$toolbars      = $([]);
         // init
         init = function() {
             //Expend settings:
             self.settings = $.extend(true, {}, self.defaults, options);
             self.el = el;
             self.$el = $(el);
-            self.loadedLanguage = languages[self.settings.languagePack];
+            self.loadedLanguage = $.SikPageBuilder.languages[self.settings.languagePack];
+            self.elements = $.SikPageBuilder.elements[self.settings.elementsPack];
+            
+            //Extend from settings:
+            self.tmpl.taggingClass          = self.settings.elementTaggingClass;
+            self.tmpl.elementBuilderClass   = self.settings.elementBuilderClass;
+
             //Build HTML Structure:
             build();
-            //Save core elements:
+            
             self.$frame = self.$el.find(">.builder-document").eq(0).contents();
             self.$doc = self.$frame.find("body").eq(0);
-            self.$controls = self.$el.find(">.controls>li");
-            self.$subControlsGroups = self.$el.find(">.working-controls>.sub-controls");
-            self.$subControls = self.$subControlsGroups.find(">li");
             self.$workingHeader = self.$el.find(">.working-header").eq(0);
+            self.$mainControlsContainer = self.$el.find(">.controls");
+            self.$toolbarControlsContainer = self.$el.find(">.toolbar-controls");
+            self.workingOn = self.$doc;
+
+            //Add controls:
+            buildElementsControls();
+            
             //Sets core styles inside the iframe:
             pushCoreStyles();
+
             //Set builder mode:
             self.toggleBuilderStyleView("show"); /* SH: added - 2021-06-14 => sets builder view should be controlled through the settings */
             //Set working on pointer:
-            self.workingOn = self.$doc;
-            //Attach main and sub controls:
-            attachControls();
+            
             //Attach events of iframe elements:
             attachDocumentEvents();
         };
@@ -170,46 +175,16 @@ version:
                 }
             }
         };
-        self.addElement = function(element = "container", _to = "") {
+        self.addElement = function(group = "basic", element = "container", _to = "") {
             let $to = _to != "" ? $(_to) : self.$doc;
             let $appended = null;
-            switch (element) {
-                case "container":
-                    $appended = $(elements.container).appendTo($to);
-                    tagElement($appended, "container");
-                break;
-                case "container-fluid":
-                    $appended = $(elements.containerFluid).appendTo($to);
-                    tagElement($appended, "fluid");
-                break;
-                case "row":
-                    $appended = $(elements.row).appendTo($to);
-                    tagElement($appended, "row");
-                break;
-                case "col":
-                    $appended = $(elements.col).appendTo($to);
-                    tagElement($appended, "col");
-                break;
-                case "header":
-                    $appended = $(elements.header).appendTo($to);
-                    tagElement($appended, "header");
-                break;
-                case "paragraph":
-                    $appended = $(elements.paragraph).appendTo($to);
-                    tagElement($appended, "para");
-                break;
-                case "span":
-                    $appended = $(elements.span).appendTo($to);
-                    tagElement($appended, "span");
-                break;
-                case "list":
-                    $appended = $(elements.list).appendTo($to);
-                    tagElement($appended, "list");
-                break;
-                case "image":
-                    $appended = $(elements.image).appendTo($to);
-                    //tagElement($appended, "image");
-                break;
+            if (self.elements[group] && self.elements[group].elements[element]) {
+                $appended = $(
+                    self.elements[group].elements[element].html.replace("%build%", self.tmpl.elementBuilderClass)
+                ).appendTo($to);
+                tagElement($appended, element);
+            } else {
+                console.warn("Tried to add an undefined element");
             }
             return;
         };
@@ -228,15 +203,15 @@ version:
             }
         };
 
-        self.toggleSubControl = function(from, which) {
-            let toShow = self.$subControlsGroups.filter("[data-name='" + which + "']");
-            if (toShow.length) {
-                self.$subControlsGroups.not(toShow).hide();
-                self.$controls.filter("[data-run='subControl']").removeClass("selected");
-                if (toShow.is(":visible")) {
-                    toShow.hide();
+        self.toggleToolbar = function(from, which) {
+            let $toShow = self.$toolbars.filter("[data-name='" + which + "']");
+            if ($toShow.length) {
+                self.$toolbars.not($toShow).hide();
+                self.$controls.filter("[data-run='openToolbar']").removeClass("selected");
+                if ($toShow.is(":visible")) {
+                    $toShow.hide();
                 } else {
-                    toShow.show();
+                    $toShow.show();
                     $(from).addClass("selected");
                 }
             }
@@ -277,31 +252,89 @@ version:
             return defaultReturn;
         };
 
-        //Attach Controls:
-        let attachControls = function() {
-            //Main controls:
-            self.$controls.each(function() {
-                $(this).on("click", function() {
-                    let handler = self.settings.handlers[$(this).data("run")];
-                    let params = $(this).clone().data("params") ?? [];
-                    //console.log(params);
-                    if (typeof handler === "function") {
-                        params.unshift(this);
-                        handler.apply(self, params);
+        //Build base elements pack controls:
+        let buildElementsControls = function() {
+            //Unpack:
+            let packs = [];
+            for (const pack in self.elements) {
+                packs.push({ group : pack, order : self.elements[pack].control.order });
+            }
+            //Sort for order:
+            packs.sort((a, b) => a.order - b.order);
+            //Build controls and controls toolbars:
+            for (const i in packs) {
+                let group = self.elements[packs[i].group];
+                addControlTo(group.control, self.$mainControlsContainer);
+                //Add toolbar if needed:
+                if (group.control.run === "openToolbar") {
+                    let $newToolbar = addToolbar(group.control);
+                    //Unpack elements:
+                    let definitions = [];
+                    for (const element in group.elements) {
+                        definitions.push({ definition : element, order : group.elements[element].order });
                     }
-                });
-            });
-            //Sub controls:
-            self.$subControls.each(function() {
-                $(this).on("click", function() {
-                    let handler = self.settings.handlers[$(this).data("run")];
-                    let params = $(this).clone().data("params") ?? [];
-                    if (typeof handler === "function")
-                        params.unshift(this);
-                        handler.apply(self, params);
-                });
+                    definitions.sort((a, b) => a.order - b.order);
+                    for (const j in definitions) {
+                        let def = definitions[j].definition;
+                        addControlTo(
+                            $.extend({}, group.elements[def],
+                                { run : "addElement", params : [packs[i].group, def]}
+                            ),
+                            $newToolbar
+                        );
+                    }
+                }
+            }
+        };
+
+        let addControlTo = function(control, $to) {
+            let command = control.run ?? "";
+            let params  = control.params ?? [];
+            let icon    = control.icon ?? "fas fa-question";
+            let name   = "";
+            let title   = "";
+            if (control.lang && control.lang[self.settings.languagePack]) {
+                title = control.lang[self.settings.languagePack].desc ?? "";
+                name = control.lang[self.settings.languagePack].name ?? "";
+            } else {
+                title = control.desc ?? "";
+                name = control.name ?? "";
+            }
+            let $newControl = $(`
+                <li data-run="${command}" data-params="" title="${title}">
+                    <i class="${icon}"></i>
+                    <small>${name}</small>
+                </li>
+            `);
+            $newControl.attr("data-params", JSON.stringify(params));
+            $newControl.appendTo($to);
+            self.$controls.push.apply(self.$controls, $newControl);
+            attachControlEvent($newControl);
+            return $newControl
+        };
+
+        let addToolbar = function(control) {
+            let $newToolbar = $(`
+                <ul class="toolbar" data-name="${(control.toolbarName ?? "")}">
+                </ul>
+            `);
+            $newToolbar.appendTo(self.$toolbarControlsContainer);
+            self.$toolbars.push.apply(self.$toolbars, $newToolbar);
+            return $newToolbar;
+        };
+
+        //Attach Controls:
+        let attachControlEvent = function($control) {
+            $control.on("click", function() {
+                let handler = self.settings.handlers[$(this).data("run")];
+                let params = $(this).clone().data("params") ?? [];
+                if (typeof handler === "function") {
+                    params.unshift(this);
+                    handler.apply(self, params);
+                }
             });
         };
+
         let attachDocumentEvents = function() {
             //Selecting elements for edits:
             self.$doc.on("click", function(){
@@ -318,12 +351,17 @@ version:
             });
             messageBar("working-on");
         };
+
         // private methods
         let tagElement = function(_el, name = "") {
             let $el = $(_el);
-            let $tagging = $el.find(".sik-tagging");
-            if (!$tagging.length)
-                $tagging = $(elements.tagging).appendTo($el);
+            let $tagging = $el.find("." + self.tmpl.taggingClass);
+            if (!$tagging.length) {
+                $tagging = $(
+                    self.tmpl.tagging.replace("%class%", self.tmpl.taggingClass)
+                                     .replace("%tag%", ""))
+                                     .appendTo($el);
+            }
         };
         // Update Working on bar:
         let messageBar = function(type, mes = "", icon = "") {

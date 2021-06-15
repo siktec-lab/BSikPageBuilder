@@ -49,6 +49,8 @@
         background-color: #ffe4c5; }
       .sik-builder > .controls > li.selected {
         background-color: #ffc079; }
+      .sik-builder > .controls > li > small {
+        display: none; }
     .sik-builder > .controls > li.disabled-control {
       cursor: default;
       color: #888888; }
@@ -56,7 +58,7 @@
         background-color: transparent; }
       .sik-builder > .controls > li.disabled-control.selected {
         background-color: transparent; }
-  .sik-builder > .working-controls {
+  .sik-builder > .toolbar-controls {
     -webkit-touch-callout: none;
     /* iOS Safari */
     -webkit-user-select: none;
@@ -69,7 +71,7 @@
     /* Internet Explorer/Edge */
     user-select: none;
     /* Non-prefixed version, currently supported by Chrome and Opera */ }
-    .sik-builder > .working-controls > .sub-controls {
+    .sik-builder > .toolbar-controls > .toolbar {
       display: none;
       box-sizing: border-box;
       font-size: 0;
@@ -79,7 +81,7 @@
       /* SH: added - 2021-06-14 => Li still is display block style ... */
       border: 1px solid #cacaca;
       border-top: 0px; }
-      .sik-builder > .working-controls > .sub-controls > li {
+      .sik-builder > .toolbar-controls > .toolbar > li {
         display: inline-block;
         padding: 0 15px;
         box-sizing: border-box;
@@ -87,11 +89,11 @@
         cursor: pointer;
         line-height: 35px;
         text-align: center; }
-        .sik-builder > .working-controls > .sub-controls > li:hover {
+        .sik-builder > .toolbar-controls > .toolbar > li:hover {
           background-color: #ffe4c5; }
-        .sik-builder > .working-controls > .sub-controls > li.selected {
+        .sik-builder > .toolbar-controls > .toolbar > li.selected {
           background-color: #ffc079; }
-        .sik-builder > .working-controls > .sub-controls > li > i {
+        .sik-builder > .toolbar-controls > .toolbar > li > i {
           margin-right: 4px; }
   .sik-builder > .working-header {
     width: 100%;

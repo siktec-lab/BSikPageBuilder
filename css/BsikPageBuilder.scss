@@ -14,9 +14,9 @@ $sikbuilder-controls-width: 35px;
 $sikbuilder-controls-size: 16px;
 $sikbuilder-controls-hover-bg: lighten($sikbuilder-sec-color, 20%);
 $sikbuilder-controls-selected-bg: lighten($sikbuilder-sec-color, 5%);
-$sikbuilder-subcontrols-size: 12px;
-$sikbuilder-subcontrols-hover-bg: lighten($sikbuilder-sec-color, 20%);
-$sikbuilder-subcontrols-selected-bg: lighten($sikbuilder-sec-color, 5%);
+$sikbuilder-toolbar-size: 12px;
+$sikbuilder-toolbar-hover-bg: lighten($sikbuilder-sec-color, 20%);
+$sikbuilder-toolbar-selected-bg: lighten($sikbuilder-sec-color, 5%);
 
 /** Theme mixins *******************************************/
 @mixin disable-user-selection {
@@ -77,6 +77,9 @@ $sikbuilder-subcontrols-selected-bg: lighten($sikbuilder-sec-color, 5%);
             border-bottom: 1px solid $sikbuilder-app-border-color;
             @include controls-hover($sikbuilder-controls-hover-bg);
             @include controls-selected($sikbuilder-controls-selected-bg);
+            >small {
+                display: none;
+            }
         }
         >li.disabled-control {
             cursor: default;
@@ -85,9 +88,9 @@ $sikbuilder-subcontrols-selected-bg: lighten($sikbuilder-sec-color, 5%);
             @include controls-selected(transparent);
         }
     }
-    >.working-controls {
+    >.toolbar-controls {
         @include disable-user-selection;
-        >.sub-controls {
+        >.toolbar {
             display: none;
             box-sizing: border-box;
             @include reset-list-style;
@@ -97,13 +100,13 @@ $sikbuilder-subcontrols-selected-bg: lighten($sikbuilder-sec-color, 5%);
                 display: inline-block;
                 padding:0 15px;
                 box-sizing: border-box;
-                font-size: $sikbuilder-subcontrols-size;
+                font-size: $sikbuilder-toolbar-size;
                 cursor: pointer;
                 line-height: $sikbuilder-controls-width;
                 text-align: center;
                 // border-right: 1px solid $sikbuilder-app-border-color;
-                @include controls-hover($sikbuilder-subcontrols-hover-bg);
-                @include controls-selected($sikbuilder-subcontrols-selected-bg);
+                @include controls-hover($sikbuilder-toolbar-hover-bg);
+                @include controls-selected($sikbuilder-toolbar-selected-bg);
                 >i {
                     margin-right: 4px;
                 }
