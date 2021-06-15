@@ -17,6 +17,7 @@ version:
         self.defaults = {
             libraries: ["Bootstrap v.5.0.1", "core"],
             viewTogglerClass: "builder-show",
+            languagePack : "english",
             handlers: {
                 copyElement: function(el) {
                     let cop = this.currentWorking();
@@ -44,9 +45,23 @@ version:
                 subControl: function(el, sub) {
                     return this.toggleSubControl(el, sub);
                 }
+            },
+            style: {
+                messageBar : {
+                    editingIcon : "fas fa-pen"
+                }
             }
         };
         self.settings = {};
+        let languages = {
+            english : {
+                messageBar : {
+                    workingOnMessage : "Selected:"
+                }
+                
+            }
+        }
+        self.loadedLanguage = {};
         let registeredLibraries = {
             "core":"css/BsikPageBuilderIframe.css",
             "Bootstrap v.5.0.1": "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
@@ -74,6 +89,7 @@ version:
             self.settings = $.extend(true, {}, self.defaults, options);
             self.el = el;
             self.$el = $(el);
+            self.loadedLanguage = languages[self.settings.languagePack];
             //Build HTML Structure:
             build();
             //Save core elements:
@@ -82,6 +98,7 @@ version:
             self.$controls = self.$el.find(">.controls>li");
             self.$subControlsGroups = self.$el.find(">.working-controls>.sub-controls");
             self.$subControls = self.$subControlsGroups.find(">li");
+            self.$workingHeader = self.$el.find(">.working-header").eq(0);
             //Sets core styles inside the iframe:
             pushCoreStyles();
             //Set builder mode:
@@ -94,7 +111,7 @@ version:
             attachDocumentEvents();
         };
 
-        build = function() {
+        let build = function() {
             console.log("build");
             //Create structure:
         };
@@ -225,7 +242,7 @@ version:
             }
         };
         //Attach Iframe styles 
-        pushCoreStyles = function() {
+        let pushCoreStyles = function() {
             //Set Libraries:
             self.loadLibraries(self.settings.libraries);
             //Add Toggler:
@@ -252,8 +269,16 @@ version:
             });
         };
 
+        //Get text from language:
+        let getText = function(category, which, defaultReturn = "") {
+            if (self.loadedLanguage.hasOwnProperty(category) && self.loadedLanguage[category].hasOwnProperty(which)) {
+                return self.loadedLanguage[category][which];
+            }
+            return defaultReturn;
+        };
+
         //Attach Controls:
-        attachControls = function() {
+        let attachControls = function() {
             //Main controls:
             self.$controls.each(function() {
                 $(this).on("click", function() {
@@ -277,27 +302,49 @@ version:
                 });
             });
         };
-        attachDocumentEvents = function() {
+        let attachDocumentEvents = function() {
             //Selecting elements for edits:
             self.$doc.on("click", function(){
                 self.workingOn = self.$doc;
                 self.$doc.find(".struct-ele").removeClass("active-working");
+                messageBar("working-on");
             });
             self.$doc.on("click", ".struct-ele", function(ev) {
                 ev.stopPropagation();
                 self.workingOn = $(this);
                 self.$doc.find(".struct-ele").not(self.workingOn).removeClass("active-working");
                 self.workingOn.toggleClass("active-working");
+                messageBar("working-on");
             });
+            messageBar("working-on");
         };
         // private methods
-        tagElement = function(_el, name = "") {
+        let tagElement = function(_el, name = "") {
             let $el = $(_el);
             let $tagging = $el.find(".sik-tagging");
             if (!$tagging.length)
                 $tagging = $(elements.tagging).appendTo($el);
-            // if (name)
-            //     $tagging.find("span.sik_tag_name").text(name);
+        };
+        // Update Working on bar:
+        let messageBar = function(type, mes = "", icon = "") {
+            let $icon = self.$workingHeader.find(">small>i").eq(0);
+            let $message = self.$workingHeader.find(">small>.message-general").eq(0);
+            let $info = self.$workingHeader.find(">small>.message-info").eq(0);
+            switch (type) {
+                case "working-on": {
+                    $icon.attr("class", self.settings.style.messageBar.editingIcon);
+                    $message.text(getText("messageBar", "workingOnMessage"));
+                    let element = self.currentWorking();
+                    let elTag = element.prop("tagName");
+                    let elId = (element.attr("id") ?? "").trim();
+                    let elClass = (element.attr("class") ?? "").replace("struct-ele","").replace("active-working","").trim()
+                    $info.text(
+                        (elTag + 
+                        (elId !== "" ? "#" + elId : "") + 
+                        (elClass !== "" ? "." + elClass.split(" ").join(".") : "")).toLocaleLowerCase()
+                    );
+                } break;
+            }
         };
 
         init();
