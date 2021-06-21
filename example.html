@@ -13,6 +13,7 @@
     <!-- Include Plugin -->
     <link rel="stylesheet" href="css/BSikPageBuilder.css" />
     <script src="BSikPageBuilder.1.0.0.js"></script>
+    <script src="controls/BSikPageBuilder.controls.core.js"></script>
     <script src="elements/BSikPageBuilder.elements.bootstrap.js"></script>
     <script src="langpack/BSikPageBuilder.langpack.en.js"></script>
     <script src="langpack/BSikPageBuilder.langpack.fr.js"></script>
@@ -33,19 +34,20 @@
         </div>
         <iframe class='builder-document'></iframe>
         <ul class='controls'>
-            <li><i class='fas fa-cog'></i></li>
+            <!-- <li><i class='fas fa-cog'></i></li>
             <li data-run='toggleView'><i class='fas fa-eye'></i></li>
             <li data-run='copyElement'><i class='fas fa-clone'></i></li>
             <li data-run='cropElement'><i class='fas fa-cut'></i></li>
             <li data-run='pasteElement' class='disabled-control'><i class='fas fa-clipboard'></i></li>
-            <li data-run='removeElement'><i class='fas fa-trash'></i></li>
-            <li class='control-devider'>a</li>
+            <li data-run='removeElement'><i class='fas fa-trash'></i></li> -->
+            <!-- <li class='control-devider'>a</li> -->
         </ul>
     </div>
     <script>
         $(function() {
             console.log($.SikPageBuilder);
-            let builder = new $.SikPageBuilder.build("#builder",{
+            let builder = new $.SikPageBuilder.build(
+                "#builder", {
                 languagePack : "english",
                 elementsPack : "bootstrap5"
             });

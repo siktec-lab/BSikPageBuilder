@@ -15,6 +15,7 @@ version:
         $.SikPageBuilder = {};
         $.SikPageBuilder["languages"]   = {};
         $.SikPageBuilder["elements"]    = {};
+        $.SikPageBuilder["controls"]    = {};
     }
     //The core plugin:
     $.SikPageBuilder["build"] = function(el, options) {
@@ -27,52 +28,38 @@ version:
             elementTaggingClass:    "sik-tagging",
             languagePack :          "english",
             elementsPack :          "bootstrap5",
-            handlers: {
-                copyElement: function(el) {
-                    let cop = this.currentWorking();
-                    return this.copyElement(el, cop);
-                },
-                cropElement: function(el) {
-                    let cop = this.currentWorking();
-                    return this.cropElement(el, cop);
-                },
-                pasteElement: function(el) {
-                    let pas = this.currentWorking();
-                    return this.pasteElement(el, pas);
-                },
-                removeElement: function(el) {
-                    let rem = this.currentWorking();
-                    return this.removeElement(el, rem);
-                },
-                addElement: function(el, group, which) {
-                    let _to = this.currentWorking();
-                    return this.addElement(group, which, _to);
-                },
-                toggleView: function(el) {
-                    return this.toggleBuilderStyleView();
-                },
-                openToolbar: function(el, toolbar) {
-                    return this.toggleToolbar(el, toolbar);
-                }
-            },
+            extendHandlers:         {},
             style: {
                 messageBar : {
                     editingIcon : "fas fa-pen"
                 }
             }
         };
-        self.settings = {};
+        //Store definitions:
+        self.settings       = {};
+        self.coreControls   = {};
         self.loadedLanguage = {};
+        self.elements       = {};
+
         let registeredLibraries = {
             "core":"css/BsikPageBuilderIframe.css",
             "Bootstrap v.5.0.1": "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
         };
-        self.elements       = {};
+        
         self.tmpl = {
             taggingClass        : "sik-tagging",
             tagging             : "<div class='%class%'>%tag%</div>",
             elementBuilderClass : "struct-ele"
         };
+        
+        let eventNames = {
+            clipboardHasValue   : "clipboard-has",
+            clipboardNowEmpty   : "clipboard-empty",
+            copyElement         : "element-copy",
+            cropElement         : "element-crop",
+            pasteElement        : "element-paste"
+        };
+
         let documentStyle   = [];
         let clipboard       = null;
         self.workingOn      = "";
@@ -85,6 +72,10 @@ version:
             self.settings = $.extend(true, {}, self.defaults, options);
             self.el = el;
             self.$el = $(el);
+            //Attach user extended handlers:
+            $.extend(true, self.handlers, self.settings.extendHandlers);
+            //Get definitions:
+            self.coreControls = $.SikPageBuilder.controls;
             self.loadedLanguage = $.SikPageBuilder.languages[self.settings.languagePack];
             self.elements = $.SikPageBuilder.elements[self.settings.elementsPack];
             
@@ -103,6 +94,9 @@ version:
             self.workingOn = self.$doc;
 
             //Add controls:
+            buildMainControls();
+
+            //Add elements controls:
             buildElementsControls();
             
             //Sets core styles inside the iframe:
@@ -120,37 +114,77 @@ version:
             console.log("build");
             //Create structure:
         };
-        // public methods
-        self.currentWorking = function() {
-            return self.workingOn != "" && self.workingOn ? self.workingOn : null;
-        };
-        self.copyElement = function(by, _ele) {
-            let ele = $(_ele);
-            if (ele.hasClass("struct-ele")) {
-                setClipboard(ele.clone(true).removeClass("active-working"),"copy");
+
+        self.handlers = {
+            execute: function(el, fn, ...params) {
+                if (typeof this[fn] === "function") {
+                    params.push(el);
+                    this[fn].apply(this, params);
+                }
+            },
+            openPanel: function(el, pan) {
+                console.log("open panel", pan, this);
+                return;
+            },
+            removeElement: function(el) {
+                let rem = this.currentWorking();
+                return this.removeElement(el, rem);
+            },
+            addElement: function(el, group, which) {
+                let _to = this.currentWorking();
+                return this.addElement(group, which, _to);
+            },
+            toggleView: function(el) {
+                return this.toggleBuilderStyleView();
+            },
+            openToolbar: function(el, toolbar) {
+                return this.toggleToolbar(el, toolbar);
             }
         };
-        self.cropElement = function(by, _ele) {
-            let ele = $(_ele);
+
+        let eventsFire = function(...events) {
+
+            console.log("EVENT", events);
+            /* SH: added - 2021-06-22 => add custom event handlers */
+
+            //Here we call events related methods:
+            //change controls states:
+            toggleControls(...events);
+
+        }
+        // public methods
+        let currentWorking = function() {
+            return self.workingOn != "" && self.workingOn ? self.workingOn : null;
+        };
+        let copyElement = function(by, _ele = null) {
+            let ele = $(_ele ?? this.currentWorking());
+            if (ele.hasClass("struct-ele")) {
+                setClipboard(ele.clone(true).removeClass("active-working"),"copy");
+                eventsFire(eventNames.copyElement);
+            }
+        };
+        let cropElement = function(by, _ele = null) {
+            let ele = $(_ele ?? this.currentWorking());
             if (ele.hasClass("struct-ele")) {
                 setClipboard(ele.detach().removeClass("active-working"), "crop");
+                eventsFire(eventNames.cropElement);
             }
         };
         let setClipboard = function(data, event) {
-            let pasteCommads = self.$controls.filter("[data-run='pasteElement']");
             if (event != "erase") {
                 clipboard = { 
                     el : data, 
                     ev : event 
                 };
-                pasteCommads.removeClass("disabled-control");
+                eventsFire(eventNames.clipboardHasValue);
             } else {
                 clipboard = null;
-                pasteCommads.addClass("disabled-control");
+                eventsFire(eventNames.clipboardNowEmpty);
             }
         }
-        self.pasteElement = function(by, $toEle) {
-            if (clipboard && $toEle) {
+        self.pasteElement = function(by, _toEle = null) {
+            let $toEle = $(_toEle ?? this.currentWorking());
+            if (clipboard && $toEle.length) {
                 if (clipboard.ev == "crop") {
                     $toEle.append(clipboard.el);
                     clipboard.el.trigger("click");
@@ -158,6 +192,7 @@ version:
                 } else {
                     $toEle.append(clipboard.el.clone(true));
                 }
+                eventsFire(eventNames.pasteElement);
             }
         };
         self.removeElement = function(by, _rem) {
@@ -252,6 +287,32 @@ version:
             return defaultReturn;
         };
 
+        //Build base main controls:
+        let buildMainControls = function() {
+            //Unpack:
+            let packs = [];
+            for (const pack in self.coreControls) {
+                packs.push({ 
+                    group : pack, 
+                    order : self.coreControls[pack].order, 
+                    controls : self.coreControls[pack].controls 
+                });
+            }
+            //Sort for order:
+            packs.sort((a, b) => a.order - b.order);
+            //Build controls and create them:
+            for (const i in packs) {
+                let group = packs[i];
+                let controls = [];
+                for (const control in group.controls) {
+                    controls.push({ name : control, order : group.controls[control].order });
+                }
+                controls.sort((a, b) => a.order - b.order);
+                for (const i in controls) {
+                    addControlTo(group.controls[controls[i].name], self.$mainControlsContainer);
+                }
+            }
+        };
         //Build base elements pack controls:
         let buildElementsControls = function() {
             //Unpack:
@@ -289,9 +350,13 @@ version:
 
         let addControlTo = function(control, $to) {
             let command = control.run ?? "";
+            let commandStr = command;
             let params  = control.params ?? [];
             let icon    = control.icon ?? "fas fa-question";
-            let name   = "";
+            let state   = (control.state ?? true) ? "" : "disabled-control";
+            let stateOn = control.stateOn ?? "";
+            let stateOff = control.stateOff ?? "";
+            let name    = "";
             let title   = "";
             if (control.lang && control.lang[self.settings.languagePack]) {
                 title = control.lang[self.settings.languagePack].desc ?? "";
@@ -300,8 +365,17 @@ version:
                 title = control.desc ?? "";
                 name = control.name ?? "";
             }
+            if (typeof command === "function") {
+                commandStr = "func";
+            }
             let $newControl = $(`
-                <li data-run="${command}" data-params="" title="${title}">
+                <li 
+                    data-run="${commandStr}" 
+                    data-params=""  
+                    data-stateon="${stateOn}" 
+                    data-stateoff="${stateOff}" 
+                    title="${title}" 
+                    class="${state}" >
                     <i class="${icon}"></i>
                     <small>${name}</small>
                 </li>
@@ -309,7 +383,7 @@ version:
             $newControl.attr("data-params", JSON.stringify(params));
             $newControl.appendTo($to);
             self.$controls.push.apply(self.$controls, $newControl);
-            attachControlEvent($newControl);
+            attachControlEvent($newControl, command);
             return $newControl
         };
 
@@ -324,15 +398,23 @@ version:
         };
 
         //Attach Controls:
-        let attachControlEvent = function($control) {
-            $control.on("click", function() {
-                let handler = self.settings.handlers[$(this).data("run")];
-                let params = $(this).clone().data("params") ?? [];
-                if (typeof handler === "function") {
+        let attachControlEvent = function($control, userFunc) {
+            if (typeof userFunc === "function") {
+                $control.on("click", function() {
+                    let params = $(this).clone().data("params") ?? [];
                     params.unshift(this);
-                    handler.apply(self, params);
-                }
-            });
+                    userFunc.apply(self, params);
+                });
+            } else {
+                $control.on("click", function() {
+                    let handler = self.handlers[$(this).data("run")];
+                    let params = $(this).clone().data("params") ?? [];
+                    if (typeof handler === "function") {
+                        params.unshift(this);
+                        handler.apply(self, params);
+                    }
+                });
+            }
         };
 
         let attachDocumentEvents = function() {
@@ -363,16 +445,31 @@ version:
                                      .appendTo($el);
             }
         };
+
+        let toggleControls = function(...events) {
+            for (const i in events) {
+                let enableControls = self.$controls.filter(`[data-stateon~='${events[i]}']`);
+                let disableControls = self.$controls.filter(`[data-stateoff~='${events[i]}']`);
+                enableControls.removeClass("disabled-control");
+                disableControls.addClass("disabled-control");
+            }
+        }
+
         // Update Working on bar:
         let messageBar = function(type, mes = "", icon = "") {
             let $icon = self.$workingHeader.find(">small>i").eq(0);
             let $message = self.$workingHeader.find(">small>.message-general").eq(0);
             let $info = self.$workingHeader.find(">small>.message-info").eq(0);
             switch (type) {
+                case "custom": {
+                    $icon.attr("class", icon);
+                    $message.text(mes);
+                    $info.text("");
+                } break;
                 case "working-on": {
                     $icon.attr("class", self.settings.style.messageBar.editingIcon);
                     $message.text(getText("messageBar", "workingOnMessage"));
-                    let element = self.currentWorking();
+                    let element = currentWorking();
                     let elTag = element.prop("tagName");
                     let elId = (element.attr("id") ?? "").trim();
                     let elClass = (element.attr("class") ?? "").replace("struct-ele","").replace("active-working","").trim()
@@ -385,6 +482,14 @@ version:
             }
         };
 
+        //Export methods api:
+        self.eventNames         = eventNames;
+        self.currentWorking     = currentWorking;
+        self.messageBar         = messageBar;
+        self.copyElement        = copyElement;
+        self.cropElement        = cropElement;
+
+        //Initialize:
         init();
     };
 
