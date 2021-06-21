@@ -26,6 +26,7 @@
     border: 1px solid #cacaca;
     border-right: 0;
     border-bottom: 0;
+    border-left: 0;
     -webkit-touch-callout: none;
     /* iOS Safari */
     -webkit-user-select: none;
@@ -38,25 +39,29 @@
     /* Internet Explorer/Edge */
     user-select: none;
     /* Non-prefixed version, currently supported by Chrome and Opera */ }
-    .sik-builder > .controls > li {
+    .sik-builder > .controls > li.control-devider {
+      height: calc(16px*.5);
+      border-bottom: 1px solid #cacaca; }
+    .sik-builder > .controls > li:not(.control-devider) {
       font-size: 16px;
       box-sizing: border-box;
       cursor: pointer;
       line-height: 35px;
       text-align: center;
-      border-bottom: 1px solid #cacaca; }
-      .sik-builder > .controls > li:hover {
+      border-bottom: 1px solid #cacaca;
+      border-left: 1px solid #cacaca; }
+      .sik-builder > .controls > li:not(.control-devider):hover {
         background-color: #ffe4c5; }
-      .sik-builder > .controls > li.selected {
+      .sik-builder > .controls > li:not(.control-devider).selected {
         background-color: #ffc079; }
-      .sik-builder > .controls > li > small {
+      .sik-builder > .controls > li:not(.control-devider) > small {
         display: none; }
-    .sik-builder > .controls > li.disabled-control {
+    .sik-builder > .controls > li:not(.control-devider).disabled-control {
       cursor: default;
       color: #888888; }
-      .sik-builder > .controls > li.disabled-control:hover {
+      .sik-builder > .controls > li:not(.control-devider).disabled-control:hover {
         background-color: transparent; }
-      .sik-builder > .controls > li.disabled-control.selected {
+      .sik-builder > .controls > li:not(.control-devider).disabled-control.selected {
         background-color: transparent; }
   .sik-builder > .toolbar-controls {
     -webkit-touch-callout: none;

@@ -67,21 +67,27 @@ $sikbuilder-toolbar-selected-bg: lighten($sikbuilder-sec-color, 5%);
         border: 1px solid $sikbuilder-app-border-color;
         border-right: 0;
         border-bottom: 0;
+        border-left: 0;
         @include disable-user-selection;
-        >li {
+        >li.control-devider {
+            height: calc(#{$sikbuilder-controls-size}*.5);
+            border-bottom: 1px solid $sikbuilder-app-border-color;
+        }
+        >li:not(.control-devider) {
             font-size: $sikbuilder-controls-size;
             box-sizing: border-box;
             cursor: pointer;
             line-height: $sikbuilder-controls-width;
             text-align: center;
             border-bottom: 1px solid $sikbuilder-app-border-color;
+            border-left: 1px solid $sikbuilder-app-border-color;
             @include controls-hover($sikbuilder-controls-hover-bg);
             @include controls-selected($sikbuilder-controls-selected-bg);
             >small {
                 display: none;
             }
         }
-        >li.disabled-control {
+        >li:not(.control-devider).disabled-control {
             cursor: default;
             color: lighten($sikbuilder-pri-color, 40%);
             @include controls-hover(transparent);
