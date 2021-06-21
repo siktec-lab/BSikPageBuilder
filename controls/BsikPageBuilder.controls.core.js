@@ -22,6 +22,8 @@ version:
                 icon: "fas fa-cog",
                 run: "openPanel",
                 params: ["core-settings"],
+                stateOn:  "clipboard-has",
+                stateOff: "clipboard-empty",
                 lang : {
                     english : { name : "Settings Panel", desc: "Open Settings Panel" },
                     french  : { name : "Settings Panel", desc: "Open Settings Panel" }
@@ -35,6 +37,8 @@ version:
                 icon: "fas fa-user",
                 run: "execute",
                 params: ["messageBar", "custom", "from custom control", "fas fa-user"],
+                stateOn:  "clipboard-has",
+                stateOff: "clipboard-empty",
                 lang : {
                     english : { name : "Settings Panel", desc: "Open Settings Panel" },
                     french  : { name : "Settings Panel", desc: "Open Settings Panel" }
@@ -46,6 +50,8 @@ version:
                 name: "Run Command",
                 desc: "Open Settings Panel",
                 icon: "fas fa-users",
+                stateOn:  "clipboard-has",
+                stateOff: "clipboard-empty",
                 run: function(el) {
                     console.log("costum function - with this and caller");
                     console.log(el);
