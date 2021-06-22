@@ -76,6 +76,7 @@ version:
                 controls: {
                     settings : {
                         order: 1,
+                        state: true,
                         name: "Settings Panel",
                         desc: "Open Settings Panel",
                         icon: "fas fa-cog",
@@ -86,32 +87,55 @@ version:
                             french  : { name : "Settings Panel", desc: "Open Settings Panel" }
                         }
                     },
-                    copyElement : {
+                    toggleView : {
                         order: 2,
+                        state: true,
+                        name: "Toggle Builder View",
+                        desc: "Toggle Builder View",
+                        icon: "fas fa-eye",
+                        iconStates: [
+                            { type : "fas fa-eye",       events : "viewstate-builder"},  
+                            { type : "fas fa-eye-slash", events : "viewstate-normal"}
+                        ],
+                        run: "execute",
+                        params: ["toggleBuilderStyleView", "toggle"],
+                        lang : {
+                            english : { name : "Toggle Builder View", desc: "Toggle Builder View" },
+                            french  : { name : "Toggle Builder View", desc: "Toggle Builder View" }
+                        }
+                    },
+                    copyElement : {
+                        order: 3,
+                        state: false,
                         name: "Copy Element",
                         desc: "Copy Current Working Element",
                         icon: "fas fa-clone",
                         run: "execute",
                         params: ["copyElement"],
+                        stateOn:  "selected-element",
+                        stateOff: "selected-root",
                         lang : {
                             english : { name : "Copy Element", desc: "Copy Current Working Element" },
                             french  : { name : "Copy Element", desc: "Copy Current Working Element" }
                         }
                     },
                     cropElement : {
-                        order: 2,
+                        order: 4,
+                        state: false,
                         name: "Cut Element",
                         desc: "Cut Current Working Element",
                         icon: "fas fa-cut",
                         run: "execute",
                         params: ["cropElement"],
+                        stateOn:  "selected-element",
+                        stateOff: "selected-root",
                         lang : {
                             english : { name : "Cut Element", desc: "Cut Current Working Element" },
                             french  : { name : "Cut Element", desc: "Cut Current Working Element" }
                         }
                     }, 
                     pasteElement : {
-                        order: 2,
+                        order: 5,
                         state: false,
                         name: "Paste Element",
                         desc: "Paste from clipboard",
@@ -124,7 +148,25 @@ version:
                             english : { name : "Paste Element", desc: "Paste from clipboard" },
                             french  : { name : "Paste Element", desc: "Paste from clipboard" }
                         }
-                    }, 
+                    },
+                    removeElement : {
+                        order: 6,
+                        state: false,
+                        name: "Remove Element",
+                        desc: "Remove selected element",
+                        icon: "fas fa-trash",
+                        run: "execute",
+                        params: ["removeElement"],
+                        stateOn:  "selected-element",
+                        stateOff: "selected-root",
+                        lang : {
+                            english : { name : "Remove Element", desc: "Remove selected element" },
+                            french  : { name : "Remove Element", desc: "Remove selected element" }
+                        }
+                    },
+                    devider : { 
+                        order : 6
+                    }
                 }
             }
         });

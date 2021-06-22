@@ -49,15 +49,21 @@ version:
         self.tmpl = {
             taggingClass        : "sik-tagging",
             tagging             : "<div class='%class%'>%tag%</div>",
-            elementBuilderClass : "struct-ele"
+            elementBuilderClass : "struct-ele",
+            controlsDevider     : "<li class='control-devider'></li>"
         };
         
         let eventNames = {
+            viewStateBuilder    : "viewstate-builder",
+            viewStateNormal     : "viewstate-normal",
             clipboardHasValue   : "clipboard-has",
             clipboardNowEmpty   : "clipboard-empty",
             copyElement         : "element-copy",
             cropElement         : "element-crop",
-            pasteElement        : "element-paste"
+            pasteElement        : "element-paste",
+            removeElement       : "element-remove",
+            selectedElement     : "selected-element",
+            selectedRoot        : "selected-root"
         };
 
         let documentStyle   = [];
@@ -103,11 +109,14 @@ version:
             pushCoreStyles();
 
             //Set builder mode:
-            self.toggleBuilderStyleView("show"); /* SH: added - 2021-06-14 => sets builder view should be controlled through the settings */
+            toggleBuilderStyleView("show"); /* SH: added - 2021-06-14 => sets builder view should be controlled through the settings */
             //Set working on pointer:
             
             //Attach events of iframe elements:
             attachDocumentEvents();
+
+            //Set default message bar:
+            messageBar("working-on");
         };
 
         let build = function() {
@@ -125,10 +134,6 @@ version:
             openPanel: function(el, pan) {
                 console.log("open panel", pan, this);
                 return;
-            },
-            removeElement: function(el) {
-                let rem = this.currentWorking();
-                return this.removeElement(el, rem);
             },
             addElement: function(el, group, which) {
                 let _to = this.currentWorking();
@@ -153,19 +158,35 @@ version:
 
         }
         // public methods
+        let setCurrentWorking = function(_ele = null) {
+            let $ele = $(_ele ?? self.$doc);
+            let $prevElements = self.$doc.find(`.${self.tmpl.elementBuilderClass}`);
+            //Check if its root:
+            if (self.$doc.get(0) === $ele.get(0)) {
+                self.workingOn = self.$doc;
+                $prevElements.removeClass("active-working");
+            } else if ($ele.hasClass(self.tmpl.elementBuilderClass)) {
+                $prevElements.not($ele).removeClass("active-working");
+                $ele.toggleClass("active-working");
+                self.workingOn = $ele.hasClass("active-working") ? $ele : self.$doc;
+            }
+            //Fire event:
+            eventsFire(self.workingOn.hasClass("active-working") ? eventNames.selectedElement : eventNames.selectedRoot);
+        };
+
         let currentWorking = function() {
             return self.workingOn != "" && self.workingOn ? self.workingOn : null;
         };
         let copyElement = function(by, _ele = null) {
             let ele = $(_ele ?? this.currentWorking());
-            if (ele.hasClass("struct-ele")) {
+            if (ele.hasClass(self.tmpl.elementBuilderClass)) {
                 setClipboard(ele.clone(true).removeClass("active-working"),"copy");
                 eventsFire(eventNames.copyElement);
             }
         };
         let cropElement = function(by, _ele = null) {
             let ele = $(_ele ?? this.currentWorking());
-            if (ele.hasClass("struct-ele")) {
+            if (ele.hasClass(self.tmpl.elementBuilderClass)) {
                 setClipboard(ele.detach().removeClass("active-working"), "crop");
                 eventsFire(eventNames.cropElement);
             }
@@ -182,7 +203,7 @@ version:
                 eventsFire(eventNames.clipboardNowEmpty);
             }
         }
-        self.pasteElement = function(by, _toEle = null) {
+        let pasteElement = function(by, _toEle = null) {
             let $toEle = $(_toEle ?? this.currentWorking());
             if (clipboard && $toEle.length) {
                 if (clipboard.ev == "crop") {
@@ -195,12 +216,13 @@ version:
                 eventsFire(eventNames.pasteElement);
             }
         };
-        self.removeElement = function(by, _rem) {
-            let rem = $(_rem);
-            if (rem.hasClass("struct-ele")) {
-                let structNext   = rem.parent().find(">.struct-ele").not(rem);
-                let structParent = rem.parent().closest(".struct-ele");
-                rem.remove();
+        let removeElement = function(by, _rem) {
+            let $rem = $(_rem ?? this.currentWorking());
+            if ($rem.hasClass(self.tmpl.elementBuilderClass)) {
+                let structNext   = $rem.parent().find(`>.${self.tmpl.elementBuilderClass}`).not($rem);
+                let structParent = $rem.parent().closest(`.${self.tmpl.elementBuilderClass}`);
+                $rem.remove();
+                eventsFire(eventNames.removeElement);
                 if (structNext.length) {
                     structNext.eq(0).trigger("click");
                 } else if (structParent.length) {
@@ -224,7 +246,7 @@ version:
             return;
         };
 
-        self.toggleBuilderStyleView = function(view = "toggle") {
+        let toggleBuilderStyleView = function(view = "toggle") {
             switch (view) {
                 case "show":
                     self.$frame.find("html").addClass(self.settings.viewTogglerClass);
@@ -236,6 +258,11 @@ version:
                     self.$frame.find("html").toggleClass(self.settings.viewTogglerClass);
                     break;
             }
+            eventsFire(
+                self.$frame.find("html").hasClass(self.settings.viewTogglerClass) 
+                ? eventNames.viewStateBuilder 
+                : eventNames.viewStateNormal
+            );
         };
 
         self.toggleToolbar = function(from, which) {
@@ -309,7 +336,7 @@ version:
                 }
                 controls.sort((a, b) => a.order - b.order);
                 for (const i in controls) {
-                    addControlTo(group.controls[controls[i].name], self.$mainControlsContainer);
+                    addControlTo(group.controls[controls[i].name], self.$mainControlsContainer, controls[i].name);
                 }
             }
         };
@@ -348,16 +375,17 @@ version:
             }
         };
 
-        let addControlTo = function(control, $to) {
-            let command = control.run ?? "";
-            let commandStr = command;
-            let params  = control.params ?? [];
-            let icon    = control.icon ?? "fas fa-question";
-            let state   = (control.state ?? true) ? "" : "disabled-control";
-            let stateOn = control.stateOn ?? "";
-            let stateOff = control.stateOff ?? "";
+        let addControlTo = function(control, $to, definitionName = "") {
+            control.run = control.run ?? "";
+            let commandStr = control.run;
+            control.params  = control.params ?? [];
+            control.icon    = control.icon ?? "fas fa-question";
+            control.state   = (control.state ?? true) ? "" : "disabled-control";
+            control.stateOn = control.stateOn ?? "";
+            control.stateOff = control.stateOff ?? "";
             let name    = "";
             let title   = "";
+            let $newControl;
             if (control.lang && control.lang[self.settings.languagePack]) {
                 title = control.lang[self.settings.languagePack].desc ?? "";
                 name = control.lang[self.settings.languagePack].name ?? "";
@@ -365,25 +393,31 @@ version:
                 title = control.desc ?? "";
                 name = control.name ?? "";
             }
-            if (typeof command === "function") {
+            if (typeof control.run === "function") {
                 commandStr = "func";
             }
-            let $newControl = $(`
-                <li 
-                    data-run="${commandStr}" 
-                    data-params=""  
-                    data-stateon="${stateOn}" 
-                    data-stateoff="${stateOff}" 
-                    title="${title}" 
-                    class="${state}" >
-                    <i class="${icon}"></i>
-                    <small>${name}</small>
-                </li>
-            `);
-            $newControl.attr("data-params", JSON.stringify(params));
+            if (definitionName === "devider") {
+                $newControl = $(self.tmpl.controlsDevider);
+            } else {
+                $newControl = $(`
+                    <li 
+                        data-run="${commandStr}" 
+                        data-params=""  
+                        data-stateon="${control.stateOn}" 
+                        data-stateoff="${control.stateOff}" 
+                        title="${title}" 
+                        class="${control.state}" >
+                        <i class="${control.icon}"></i>
+                        <small>${name}</small>
+                    </li>
+                `);
+                $newControl.attr("data-params", JSON.stringify(control.params));
+                attachControlEvent($newControl, control.run);
+            }
+
+            $newControl.data("definition", control);
             $newControl.appendTo($to);
             self.$controls.push.apply(self.$controls, $newControl);
-            attachControlEvent($newControl, command);
             return $newControl
         };
 
@@ -420,18 +454,14 @@ version:
         let attachDocumentEvents = function() {
             //Selecting elements for edits:
             self.$doc.on("click", function(){
-                self.workingOn = self.$doc;
-                self.$doc.find(".struct-ele").removeClass("active-working");
+                self.setCurrentWorking(this);
                 messageBar("working-on");
             });
-            self.$doc.on("click", ".struct-ele", function(ev) {
+            self.$doc.on("click", `.${self.tmpl.elementBuilderClass}`, function(ev) {
                 ev.stopPropagation();
-                self.workingOn = $(this);
-                self.$doc.find(".struct-ele").not(self.workingOn).removeClass("active-working");
-                self.workingOn.toggleClass("active-working");
+                self.setCurrentWorking(this);
                 messageBar("working-on");
             });
-            messageBar("working-on");
         };
 
         // private methods
@@ -448,12 +478,26 @@ version:
 
         let toggleControls = function(...events) {
             for (const i in events) {
+                //Set states:
                 let enableControls = self.$controls.filter(`[data-stateon~='${events[i]}']`);
                 let disableControls = self.$controls.filter(`[data-stateoff~='${events[i]}']`);
                 enableControls.removeClass("disabled-control");
                 disableControls.addClass("disabled-control");
+                //Set icons:
+                self.$controls.each(function() {
+                    let $con = $(this);
+                    let definition = $con.data("definition").iconStates ?? false;
+                    if (definition && Array.isArray(definition)) {
+                        for (const j in definition) {
+                            if (definition[j].events && definition[j].events.includes(events[i])) {
+                                $con.find("i").attr("class", definition[j].type);
+                                return;
+                            }
+                        }
+                    }
+                });
             }
-        }
+        };
 
         // Update Working on bar:
         let messageBar = function(type, mes = "", icon = "") {
@@ -472,7 +516,7 @@ version:
                     let element = currentWorking();
                     let elTag = element.prop("tagName");
                     let elId = (element.attr("id") ?? "").trim();
-                    let elClass = (element.attr("class") ?? "").replace("struct-ele","").replace("active-working","").trim()
+                    let elClass = (element.attr("class") ?? "").replace(self.tmpl.elementBuilderClass,"").replace("active-working","").trim()
                     $info.text(
                         (elTag + 
                         (elId !== "" ? "#" + elId : "") + 
@@ -483,12 +527,15 @@ version:
         };
 
         //Export methods api:
-        self.eventNames         = eventNames;
-        self.currentWorking     = currentWorking;
-        self.messageBar         = messageBar;
-        self.copyElement        = copyElement;
-        self.cropElement        = cropElement;
-
+        self.eventNames             = eventNames;
+        self.setCurrentWorking      = setCurrentWorking;
+        self.currentWorking         = currentWorking;
+        self.messageBar             = messageBar;
+        self.copyElement            = copyElement;
+        self.cropElement            = cropElement;
+        self.pasteElement           = pasteElement;
+        self.removeElement          = removeElement;
+        self.toggleBuilderStyleView = toggleBuilderStyleView;
         //Initialize:
         init();
     };
