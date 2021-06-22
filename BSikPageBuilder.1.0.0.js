@@ -189,6 +189,7 @@ version:
             if (ele.hasClass(self.tmpl.elementBuilderClass)) {
                 setClipboard(ele.detach().removeClass("active-working"), "crop");
                 eventsFire(eventNames.cropElement);
+                setCurrentWorking(); // will set root;
             }
         };
         let setClipboard = function(data, event) {
