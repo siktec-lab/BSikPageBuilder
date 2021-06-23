@@ -104,8 +104,38 @@ version:
                             french  : { name : "Toggle Builder View", desc: "Toggle Builder View" }
                         }
                     },
-                    copyElement : {
+                    moveUp : {
                         order: 3,
+                        state: false,
+                        name: "Move Element Up",
+                        desc: "Move selected element up the hierarchy",
+                        icon: "fas fa-level-up-alt",
+                        run: "execute",
+                        params: ["moveElement", "prev"],
+                        stateOn:  "selected-element",
+                        stateOff: "selected-root",
+                        lang : {
+                            english : { name : "Move Element Up", desc: "Move selected element up the hierarchy" },
+                            french  : { name : "Move Element Up", desc: "Move selected element up the hierarchy" }
+                        }
+                    },
+                    moveDown : {
+                        order: 4,
+                        state: false,
+                        name: "Move Element Down",
+                        desc: "Toggle Builder View",
+                        icon: "fas fa-level-down-alt",
+                        run: "execute",
+                        params: ["moveElement", "next"],
+                        stateOn:  "selected-element",
+                        stateOff: "selected-root",
+                        lang : {
+                            english : { name : "Move Element Down", desc: "Move selected element down the hierarchy" },
+                            french  : { name : "Move Element Down", desc: "Move selected element down the hierarchy" }
+                        }
+                    },
+                    copyElement : {
+                        order: 5,
                         state: false,
                         name: "Copy Element",
                         desc: "Copy Current Working Element",
@@ -120,7 +150,7 @@ version:
                         }
                     },
                     cropElement : {
-                        order: 4,
+                        order: 6,
                         state: false,
                         name: "Cut Element",
                         desc: "Cut Current Working Element",
@@ -135,7 +165,7 @@ version:
                         }
                     }, 
                     pasteElement : {
-                        order: 5,
+                        order: 7,
                         state: false,
                         name: "Paste Element",
                         desc: "Paste from clipboard",
@@ -150,7 +180,7 @@ version:
                         }
                     },
                     removeElement : {
-                        order: 6,
+                        order: 8,
                         state: false,
                         name: "Remove Element",
                         desc: "Remove selected element",
@@ -165,7 +195,7 @@ version:
                         }
                     },
                     devider : { 
-                        order : 6
+                        order : 9
                     }
                 }
             }

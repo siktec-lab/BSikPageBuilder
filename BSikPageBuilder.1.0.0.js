@@ -49,7 +49,7 @@ version:
             "Bootstrap v.5.0.1": "https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css"
         };
         
-        self.tmpl = {
+        self.tpl = {
             taggingClass        : "sik-tagging",
             tagging             : "<div class='%class%'>%tag%</div>",
             elementBuilderClass : "struct-ele",
@@ -66,7 +66,8 @@ version:
             pasteElement        : "element-paste",
             removeElement       : "element-remove",
             selectedElement     : "selected-element",
-            selectedRoot        : "selected-root"
+            selectedRoot        : "selected-root",
+            moveElement         : "move-element"
         };
 
         let documentStyle   = [];
@@ -92,8 +93,8 @@ version:
             self.elements = $.SikPageBuilder.elements[self.settings.elementsPack];
             
             //Extend from settings:
-            self.tmpl.taggingClass          = self.settings.elementTaggingClass;
-            self.tmpl.elementBuilderClass   = self.settings.elementBuilderClass;
+            self.tpl.taggingClass          = self.settings.elementTaggingClass;
+            self.tpl.elementBuilderClass   = self.settings.elementBuilderClass;
 
             //Build HTML Structure:
             build();
@@ -135,7 +136,6 @@ version:
         self.handlers = {
             execute: function(el, fn, ...params) {
                 if (typeof this[fn] === "function") {
-                    params.push(el);
                     this[fn].apply(this, params);
                 }
             },
@@ -152,11 +152,21 @@ version:
             }
         };
 
+        
+        /************************************************************************************
+         * PRIVATE HELPER METHODS
+         ***********************************************************************************/
         let attachEventListener = function(type, handler) {
-            self.$el.bind(type, handler);
+            if (self.hasEventName(type))
+                self.$el.bind(type, handler);
+            else
+                console.warn(`Tried to add Event Listener of unknown event name [${type}]`);
         };
         let detachEventListener = function(type) {
-            self.$el.unbind(type);
+            if (self.hasEventName(type))
+                self.$el.unbind(type);
+            else
+                console.warn(`Tried to remove Event Listener of unknown event name [${type}]`);
         };
         let raiseEvent = function(_events, ...params) {
             let events = Array.isArray(_events) ? _events : [_events];
@@ -170,16 +180,39 @@ version:
                 self.$el.trigger(events[e], [self, ...params]);
             }
             
+        };
+        let eleMove = function(dir, ele, upIfNone = true) {
+            let $cur  = $(ele);
+            let $prev = $cur.prev(`.${self.tpl.elementBuilderClass}`);
+            let $next = $cur.next(`.${self.tpl.elementBuilderClass}`);
+            let $parent = $cur.parent().closest(`.${self.tpl.elementBuilderClass}`);
+            let moved = false;
+            if (dir === "prev" && $prev.length) {
+                moved = $cur.insertBefore($prev);
+            } else if (dir === "prev" && upIfNone && $parent.length) {
+                moved = $cur.insertBefore($parent);
+            } else if (dir === "next" && $next.length) {
+                moved = $cur.insertAfter($next);
+            } else if (dir === "next" && upIfNone && $parent.length) {
+                moved = $cur.insertAfter($parent);
+            } else if (dir === "up" && $parent.length) {
+                moved = $cur.insertBefore($parent);
+            }
+            return moved !== false;
         }
+
+        /************************************************************************************
+         * PUBLIC ACTION METHODS
+         ***********************************************************************************/
         // public methods
         let setCurrentWorking = function(_ele = null) {
             let $ele = $(_ele ?? self.$doc);
-            let $prevElements = self.$doc.find(`.${self.tmpl.elementBuilderClass}`);
+            let $prevElements = self.$doc.find(`.${self.tpl.elementBuilderClass}`);
             //Check if its root:
             if (self.$doc.get(0) === $ele.get(0)) {
                 self.workingOn = self.$doc;
                 $prevElements.removeClass("active-working");
-            } else if ($ele.hasClass(self.tmpl.elementBuilderClass)) {
+            } else if ($ele.hasClass(self.tpl.elementBuilderClass)) {
                 $prevElements.not($ele).removeClass("active-working");
                 $ele.toggleClass("active-working");
                 self.workingOn = $ele.hasClass("active-working") ? $ele : self.$doc;
@@ -191,16 +224,16 @@ version:
         let currentWorking = function() {
             return self.workingOn != "" && self.workingOn ? self.workingOn : null;
         };
-        let copyElement = function(by, _ele = null) {
+        let copyElement = function(_ele = null) {
             let ele = $(_ele ?? this.currentWorking());
-            if (ele.hasClass(self.tmpl.elementBuilderClass)) {
+            if (ele.hasClass(self.tpl.elementBuilderClass)) {
                 setClipboard(ele.clone(true).removeClass("active-working"),"copy");
                 raiseEvent(eventNames.copyElement, clipboard.el);
             }
         };
-        let cropElement = function(by, _ele = null) {
+        let cropElement = function(_ele = null) {
             let ele = $(_ele ?? this.currentWorking());
-            if (ele.hasClass(self.tmpl.elementBuilderClass)) {
+            if (ele.hasClass(self.tpl.elementBuilderClass)) {
                 setClipboard(ele.detach().removeClass("active-working"), "crop");
                 raiseEvent(eventNames.cropElement, clipboard.el);
                 setCurrentWorking(); // will set root;
@@ -218,7 +251,7 @@ version:
                 raiseEvent(eventNames.clipboardNowEmpty);
             }
         }
-        let pasteElement = function(by, _toEle = null) {
+        let pasteElement = function(_toEle = null) {
             let $toEle = $(_toEle ?? this.currentWorking());
             if (clipboard && $toEle.length) {
                 let el = clipboard.el.clone(true);
@@ -232,11 +265,11 @@ version:
                 raiseEvent(eventNames.pasteElement, el);
             }
         };
-        let removeElement = function(by, _rem) {
+        let removeElement = function(_rem = null) {
             let $rem = $(_rem ?? this.currentWorking());
-            if ($rem.hasClass(self.tmpl.elementBuilderClass)) {
-                let structNext   = $rem.parent().find(`>.${self.tmpl.elementBuilderClass}`).not($rem);
-                let structParent = $rem.parent().closest(`.${self.tmpl.elementBuilderClass}`);
+            if ($rem.hasClass(self.tpl.elementBuilderClass)) {
+                let structNext   = $rem.parent().find(`>.${self.tpl.elementBuilderClass}`).not($rem);
+                let structParent = $rem.parent().closest(`.${self.tpl.elementBuilderClass}`);
                 $rem.remove();
                 raiseEvent(eventNames.removeElement, $rem);
                 if (structNext.length) {
@@ -248,12 +281,21 @@ version:
                 }
             }
         };
+        //let eleMove = function(dir, ele, upIfNone = true)
+        let moveElement = function(dir) {
+            let $ele = this.currentWorking();
+            if (eleMove(dir, $ele, true)) {
+                raiseEvent(eventNames.moveElement, $ele.get(0), dir);
+            }
+        };
+
+
         self.addElement = function(group = "basic", element = "container", _to = "") {
             let $to = _to != "" ? $(_to) : self.$doc;
             let $appended = null;
             if (self.elements[group] && self.elements[group].elements[element]) {
                 $appended = $(
-                    self.elements[group].elements[element].html.replace("%build%", self.tmpl.elementBuilderClass)
+                    self.elements[group].elements[element].html.replace("%build%", self.tpl.elementBuilderClass)
                 ).appendTo($to);
                 tagElement($appended, element);
             } else {
@@ -413,7 +455,7 @@ version:
                 commandStr = "func";
             }
             if (definitionName === "devider") {
-                $newControl = $(self.tmpl.controlsDevider);
+                $newControl = $(self.tpl.controlsDevider);
             } else {
                 $newControl = $(`
                     <li 
@@ -473,7 +515,7 @@ version:
                 self.setCurrentWorking(this);
                 messageBar("working-on");
             });
-            self.$doc.on("click", `.${self.tmpl.elementBuilderClass}`, function(ev) {
+            self.$doc.on("click", `.${self.tpl.elementBuilderClass}`, function(ev) {
                 ev.stopPropagation();
                 self.setCurrentWorking(this);
                 messageBar("working-on");
@@ -483,10 +525,10 @@ version:
         // private methods
         let tagElement = function(_el, name = "") {
             let $el = $(_el);
-            let $tagging = $el.find("." + self.tmpl.taggingClass);
+            let $tagging = $el.find("." + self.tpl.taggingClass);
             if (!$tagging.length) {
                 $tagging = $(
-                    self.tmpl.tagging.replace("%class%", self.tmpl.taggingClass)
+                    self.tpl.tagging.replace("%class%", self.tpl.taggingClass)
                                      .replace("%tag%", ""))
                                      .appendTo($el);
             }
@@ -534,7 +576,7 @@ version:
                     let elTag = element.prop("tagName");
                     let elId = (element.attr("id") ?? "").trim();
                     let elClass = (element.attr("class") ?? "")
-                                    .replace(self.tmpl.elementBuilderClass,"")
+                                    .replace(self.tpl.elementBuilderClass,"")
                                     .replace("active-working","")
                                     .trim()
                     $info.text(
@@ -555,6 +597,8 @@ version:
         self.cropElement            = cropElement;
         self.pasteElement           = pasteElement;
         self.removeElement          = removeElement;
+        self.moveElement            = moveElement;
+
         self.toggleBuilderStyleView = toggleBuilderStyleView;
         self.attachEventListener    = attachEventListener;
         self.detachEventListener    = detachEventListener;
@@ -562,7 +606,7 @@ version:
         return init();
     };
 
-    //Prototypes - mainly for convenience
+    //Prototypes - mainly for convenience and naming like compatability:
     PageBuilder.prototype.addEventListener = function(type, handler = function(){}) {
         this.attachEventListener(type, handler);
         return this;
@@ -571,6 +615,9 @@ version:
         this.detachEventListener(type, handler);
         return this;
     };
+    PageBuilder.prototype.hasEventName = function(eventName = "") {
+        return Object.values(this.eventNames).filter((name)=> name === eventName).length ? true : false;
+    }
     $.SikPageBuilder.build =  PageBuilder;
 
 })(jQuery);
