@@ -2,6 +2,10 @@
 /** Theme settings ********************************************/
 /** Theme mixins *******************************************/
 /** Theme rules ********************************************/
+.struct-ele:hover {
+  outline: 1px dashed #2243ff; }
+.struct-ele.active-working {
+  outline: 2px dashed #e64100; }
 .struct-ele > .sik-tagging {
   display: none;
   position: relative;

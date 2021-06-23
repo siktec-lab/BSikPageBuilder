@@ -1,13 +1,17 @@
 
 @use "sass:list";
+
 /** Theme settings ********************************************/
-
-$element-outline-color: #2243ff;
-$element-outline-focused: 1px, #2243ff;
-$element-outline-blurred: 1px, lighten($element-outline-color, 30%);
-$element-outline-active: 2px,  #e64100;
+$element-normalmode-outline-color: #585858;
+$element-normalmode-outline-focused: 1px, dashed, #2243ff;
+$element-normalmode-outline-blurred: 1px, dashed, lighten($element-normalmode-outline-color, 30%);
+$element-normalmode-outline-active: 2px, dashed,#e64100;
+$element-builder-outline-color: #2243ff;
+$element-builder-outline-focused: 1px, solid, #2243ff;
+$element-builder-outline-blurred: 1px, solid, lighten($element-builder-outline-color, 30%);
+$element-builder-outline-active: 2px, solid, #e64100;
 $element-debug-minheight: 35px;
-
+ 
 
 @function headings($from:1, $to:6, $with:'') {
     @if $from == $to {
@@ -31,8 +35,8 @@ $element-debug-minheight: 35px;
         }
     }
 }
-@mixin outline($size, $color) {
-    outline: $size solid $color;
+@mixin outline($size, $type, $color) {
+    outline: $size $type $color;
 }
 @mixin smart-padding($top:-1, $right:-1, $bottom:-1, $left:-1) {
     @if $top != -1 {
@@ -82,21 +86,29 @@ $element-debug-minheight: 35px;
 }
 
 /** Theme rules ********************************************/
-.struct-ele>.sik-tagging {
-    display:none;
-    position:relative;
-    padding:0;
-    margin:0; 
-    &::after { 
-        display:none; 
-        position: absolute;
-        top:-19px;
-        left:-10px;
-        background-color: yellow;
-        content:'element';
-        font-size: 10px;
-        color: #878787; 
-        vertical-align: text-top;
+.struct-ele {
+    &:hover {
+        @include outline($element-normalmode-outline-focused...);
+    }
+    &.active-working {
+        @include outline($element-normalmode-outline-active...);
+    }
+    >.sik-tagging {
+        display:none;
+        position:relative;
+        padding:0;
+        margin:0; 
+        &::after { 
+            display:none; 
+            position: absolute;
+            top:-19px;
+            left:-10px;
+            background-color: yellow;
+            content:'element';
+            font-size: 10px;
+            color: #878787; 
+            vertical-align: text-top;
+        }
     }
 }
 
@@ -115,12 +127,12 @@ $element-debug-minheight: 35px;
         padding: 20px; 
     }
     .struct-ele {
-        @include outline($element-outline-blurred...);
+        @include outline($element-builder-outline-blurred...);
         &:hover {
-            @include outline($element-outline-focused...);
+            @include outline($element-builder-outline-focused...);
         }
         &.active-working {
-            @include outline($element-outline-active...);
+            @include outline($element-builder-outline-active...);
         }
         .sik-tagging {
             display:inline-block;
