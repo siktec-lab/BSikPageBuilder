@@ -181,23 +181,26 @@ version:
             }
             
         };
-        let eleMove = function(dir, ele, upIfNone = true) {
-            let $cur  = $(ele);
-            let $prev = $cur.prev(`.${self.tpl.elementBuilderClass}`);
-            let $next = $cur.next(`.${self.tpl.elementBuilderClass}`);
-            let $parent = $cur.parent().closest(`.${self.tpl.elementBuilderClass}`);
+        let eleMove = function(dir, eles, upIfNone = true) {
+            let $eles  = $(eles);
             let moved = false;
-            if (dir === "prev" && $prev.length) {
-                moved = $cur.insertBefore($prev);
-            } else if (dir === "prev" && upIfNone && $parent.length) {
-                moved = $cur.insertBefore($parent);
-            } else if (dir === "next" && $next.length) {
-                moved = $cur.insertAfter($next);
-            } else if (dir === "next" && upIfNone && $parent.length) {
-                moved = $cur.insertAfter($parent);
-            } else if (dir === "up" && $parent.length) {
-                moved = $cur.insertBefore($parent);
-            }
+            $eles.each(function(){
+                let $cur = $(this);
+                let $prev = $cur.prev(`.${self.tpl.elementBuilderClass}`).not($eles);
+                let $next = $cur.next(`.${self.tpl.elementBuilderClass}`).not($eles);
+                let $parent = $cur.parent().closest(`.${self.tpl.elementBuilderClass}`).not($eles);
+                if (dir === "prev" && $prev.length) {
+                    moved = $cur.insertBefore($prev);
+                } else if (dir === "prev" && upIfNone && $parent.length) {
+                    moved = $cur.insertBefore($parent);
+                } else if (dir === "next" && $next.length) {
+                    moved = $cur.insertAfter($next);
+                } else if (dir === "next" && upIfNone && $parent.length) {
+                    moved = $cur.insertAfter($parent);
+                } else if (dir === "up" && $parent.length) {
+                    moved = $cur.insertBefore($parent);
+                }
+            });
             return moved !== false;
         }
 
@@ -205,36 +208,42 @@ version:
          * PUBLIC ACTION METHODS
          ***********************************************************************************/
         // public methods
-        let setCurrentWorking = function(_ele = null) {
+        let setCurrentWorking = function(_ele = null, multi = false) {
             let $ele = $(_ele ?? self.$doc);
             let $prevElements = self.$doc.find(`.${self.tpl.elementBuilderClass}`);
             //Check if its root:
             if (self.$doc.get(0) === $ele.get(0)) {
+                if (multi) return; // if multiple selection avoid adding root
                 self.workingOn = self.$doc;
                 $prevElements.removeClass("active-working");
             } else if ($ele.hasClass(self.tpl.elementBuilderClass)) {
-                $prevElements.not($ele).removeClass("active-working");
-                $ele.toggleClass("active-working");
-                self.workingOn = $ele.hasClass("active-working") ? $ele : self.$doc;
+                if (multi) {
+                    $ele.toggleClass("active-working");
+                    self.workingOn = self.$doc.find(".active-working");
+                } else {
+                    $prevElements.not($ele).removeClass("active-working");
+                    $ele.toggleClass("active-working");
+                    self.workingOn = $ele.hasClass("active-working") ? $ele : self.$doc;
+                }
             }
             //Fire event:
             raiseEvent(self.workingOn.hasClass("active-working") ? eventNames.selectedElement : eventNames.selectedRoot);
         };
 
         let currentWorking = function() {
-            return self.workingOn != "" && self.workingOn ? self.workingOn : null;
+            return self.workingOn != "" && self.workingOn.length ? self.workingOn : null;
         };
         let copyElement = function(_ele = null) {
-            let ele = $(_ele ?? this.currentWorking());
-            if (ele.hasClass(self.tpl.elementBuilderClass)) {
-                setClipboard(ele.clone(true).removeClass("active-working"),"copy");
+            let $eles = $(_ele ?? this.currentWorking());
+            if ($eles.hasClass(self.tpl.elementBuilderClass)) {
+                setClipboard($eles.clone(true).removeClass("active-working"),"copy");
                 raiseEvent(eventNames.copyElement, clipboard.el);
             }
         };
         let cropElement = function(_ele = null) {
-            let ele = $(_ele ?? this.currentWorking());
-            if (ele.hasClass(self.tpl.elementBuilderClass)) {
-                setClipboard(ele.detach().removeClass("active-working"), "crop");
+            let $eles = $(_ele ?? this.currentWorking());
+            if ($eles.hasClass(self.tpl.elementBuilderClass)) {
+                setClipboard($eles.detach().removeClass("active-working"), "crop");
                 raiseEvent(eventNames.cropElement, clipboard.el);
                 setCurrentWorking(); // will set root;
             }
@@ -254,28 +263,29 @@ version:
         let pasteElement = function(_toEle = null) {
             let $toEle = $(_toEle ?? this.currentWorking());
             if (clipboard && $toEle.length) {
-                let el = clipboard.el.clone(true);
+                let $eles = clipboard.el.clone(true);
                 if (clipboard.ev == "crop") {
-                    $toEle.append(el);
-                    el.trigger("click");
+                    $toEle.append($eles);
+                    $eles.each((i,el) => $(el).trigger("click"));
                     setClipboard(null, "erase");
                 } else {
-                    $toEle.append(el);
+                    $toEle.append($eles);
+                    raiseEvent([eventNames.pasteElement],$eles);
                 }
-                raiseEvent(eventNames.pasteElement, el);
+                
             }
         };
         let removeElement = function(_rem = null) {
             let $rem = $(_rem ?? this.currentWorking());
             if ($rem.hasClass(self.tpl.elementBuilderClass)) {
-                let structNext   = $rem.parent().find(`>.${self.tpl.elementBuilderClass}`).not($rem);
+                let structNext   = $rem.next(`.${self.tpl.elementBuilderClass}`).not($rem);
                 let structParent = $rem.parent().closest(`.${self.tpl.elementBuilderClass}`);
                 $rem.remove();
                 raiseEvent(eventNames.removeElement, $rem);
                 if (structNext.length) {
                     structNext.eq(0).trigger("click");
                 } else if (structParent.length) {
-                    structParent.trigger("click");
+                    structParent.eq(0).trigger("click");
                 } else {
                     self.$doc.trigger("click");
                 }
@@ -283,9 +293,9 @@ version:
         };
         //let eleMove = function(dir, ele, upIfNone = true)
         let moveElement = function(dir) {
-            let $ele = this.currentWorking();
-            if (eleMove(dir, $ele, true)) {
-                raiseEvent(eventNames.moveElement, $ele.get(0), dir);
+            let $eles = this.currentWorking();
+            if (eleMove(dir, $eles, true)) {
+                raiseEvent(eventNames.moveElement, $eles.get(), dir);
             }
         };
 
@@ -511,13 +521,13 @@ version:
 
         let attachDocumentEvents = function() {
             //Selecting elements for edits:
-            self.$doc.on("click", function(){
-                self.setCurrentWorking(this);
+            self.$doc.on("click", function(ev){
+                self.setCurrentWorking(this, ev.ctrlKey);
                 messageBar("working-on");
             });
             self.$doc.on("click", `.${self.tpl.elementBuilderClass}`, function(ev) {
                 ev.stopPropagation();
-                self.setCurrentWorking(this);
+                self.setCurrentWorking(this, ev.ctrlKey);
                 messageBar("working-on");
             });
         };
