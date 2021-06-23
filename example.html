@@ -37,14 +37,35 @@
         </ul>
     </div>
     <script>
+        var builder;
         $(function() {
             console.log($.SikPageBuilder);
-            let builder = new $.SikPageBuilder.build(
+            builder = new $.SikPageBuilder.build(
                 "#builder", {
                 languagePack : "english",
                 elementsPack : "bootstrap5"
             });
+            //* Example adding event listeners:
+            builder.addEventListener("viewstate-normal", function(event, instance) {
+                console.log("Listener viewstate-normal FIRED");
+            });
+            builder.addEventListener("element-copy", function(event, instance, copied) {
+                console.log("Listener element-copy FIRED", copied);
+                $(copied).css("backgroundColor", "red");
+            });
+            builder.addEventListener("element-crop", function(event, instance, cropped) {
+                console.log("Listener element-crop FIRED", cropped);
+                $(cropped).css("backgroundColor", "blue");
+            });
+            builder.addEventListener("element-paste", function(event, instance, pasted) {
+                console.log("Listener element-paste FIRED", pasted);
+            });
+            builder.addEventListener("element-remove", function(event, instance, removed) {
+                console.log("Listener element-remove FIRED", removed);
+            });
+            /**/
         });
+        
     </script>
 </body>
 

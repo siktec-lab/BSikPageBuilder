@@ -17,8 +17,11 @@ version:
         $.SikPageBuilder["elements"]    = {};
         $.SikPageBuilder["controls"]    = {};
     }
+    $.SikPageBuilder["build"] = {};
+
+    
     //The core plugin:
-    $.SikPageBuilder["build"] = function(el, options) {
+    function PageBuilder(el, options) {
         let self, init;
         self = this;
         self.defaults = {
@@ -74,10 +77,13 @@ version:
         self.$toolbars      = $([]);
         // init
         init = function() {
+            
             //Expend settings:
             self.settings = $.extend(true, {}, self.defaults, options);
             self.el = el;
             self.$el = $(el);
+            self.$el.data("instance", self);
+
             //Attach user extended handlers:
             $.extend(true, self.handlers, self.settings.extendHandlers);
             //Get definitions:
@@ -117,6 +123,8 @@ version:
 
             //Set default message bar:
             messageBar("working-on");
+
+            return self;
         };
 
         let build = function() {
@@ -139,23 +147,29 @@ version:
                 let _to = this.currentWorking();
                 return this.addElement(group, which, _to);
             },
-            toggleView: function(el) {
-                return this.toggleBuilderStyleView();
-            },
             openToolbar: function(el, toolbar) {
                 return this.toggleToolbar(el, toolbar);
             }
         };
 
-        let eventsFire = function(...events) {
-
+        let attachEventListener = function(type, handler) {
+            self.$el.bind(type, handler);
+        };
+        let detachEventListener = function(type) {
+            self.$el.unbind(type);
+        };
+        let raiseEvent = function(_events, ...params) {
+            let events = Array.isArray(_events) ? _events : [_events];
             console.log("EVENT", events);
-            /* SH: added - 2021-06-22 => add custom event handlers */
+            
+            //change controls states:
+            toggleControls(events);
 
             //Here we call events related methods:
-            //change controls states:
-            toggleControls(...events);
-
+            for (const e in events) {
+                self.$el.trigger(events[e], [self, ...params]);
+            }
+            
         }
         // public methods
         let setCurrentWorking = function(_ele = null) {
@@ -171,7 +185,7 @@ version:
                 self.workingOn = $ele.hasClass("active-working") ? $ele : self.$doc;
             }
             //Fire event:
-            eventsFire(self.workingOn.hasClass("active-working") ? eventNames.selectedElement : eventNames.selectedRoot);
+            raiseEvent(self.workingOn.hasClass("active-working") ? eventNames.selectedElement : eventNames.selectedRoot);
         };
 
         let currentWorking = function() {
@@ -181,14 +195,14 @@ version:
             let ele = $(_ele ?? this.currentWorking());
             if (ele.hasClass(self.tmpl.elementBuilderClass)) {
                 setClipboard(ele.clone(true).removeClass("active-working"),"copy");
-                eventsFire(eventNames.copyElement);
+                raiseEvent(eventNames.copyElement, clipboard.el);
             }
         };
         let cropElement = function(by, _ele = null) {
             let ele = $(_ele ?? this.currentWorking());
             if (ele.hasClass(self.tmpl.elementBuilderClass)) {
                 setClipboard(ele.detach().removeClass("active-working"), "crop");
-                eventsFire(eventNames.cropElement);
+                raiseEvent(eventNames.cropElement, clipboard.el);
                 setCurrentWorking(); // will set root;
             }
         };
@@ -198,23 +212,24 @@ version:
                     el : data, 
                     ev : event 
                 };
-                eventsFire(eventNames.clipboardHasValue);
+                raiseEvent(eventNames.clipboardHasValue);
             } else {
                 clipboard = null;
-                eventsFire(eventNames.clipboardNowEmpty);
+                raiseEvent(eventNames.clipboardNowEmpty);
             }
         }
         let pasteElement = function(by, _toEle = null) {
             let $toEle = $(_toEle ?? this.currentWorking());
             if (clipboard && $toEle.length) {
+                let el = clipboard.el.clone(true);
                 if (clipboard.ev == "crop") {
-                    $toEle.append(clipboard.el);
-                    clipboard.el.trigger("click");
+                    $toEle.append(el);
+                    el.trigger("click");
                     setClipboard(null, "erase");
                 } else {
-                    $toEle.append(clipboard.el.clone(true));
+                    $toEle.append(el);
                 }
-                eventsFire(eventNames.pasteElement);
+                raiseEvent(eventNames.pasteElement, el);
             }
         };
         let removeElement = function(by, _rem) {
@@ -223,7 +238,7 @@ version:
                 let structNext   = $rem.parent().find(`>.${self.tmpl.elementBuilderClass}`).not($rem);
                 let structParent = $rem.parent().closest(`.${self.tmpl.elementBuilderClass}`);
                 $rem.remove();
-                eventsFire(eventNames.removeElement);
+                raiseEvent(eventNames.removeElement, $rem);
                 if (structNext.length) {
                     structNext.eq(0).trigger("click");
                 } else if (structParent.length) {
@@ -259,7 +274,7 @@ version:
                     self.$frame.find("html").toggleClass(self.settings.viewTogglerClass);
                     break;
             }
-            eventsFire(
+            raiseEvent(
                 self.$frame.find("html").hasClass(self.settings.viewTogglerClass) 
                 ? eventNames.viewStateBuilder 
                 : eventNames.viewStateNormal
@@ -477,7 +492,8 @@ version:
             }
         };
 
-        let toggleControls = function(...events) {
+        let toggleControls = function(_events) {
+            let events = Array.isArray(_events) ? _events : [_events];
             for (const i in events) {
                 //Set states:
                 let enableControls = self.$controls.filter(`[data-stateon~='${events[i]}']`);
@@ -517,7 +533,10 @@ version:
                     let element = currentWorking();
                     let elTag = element.prop("tagName");
                     let elId = (element.attr("id") ?? "").trim();
-                    let elClass = (element.attr("class") ?? "").replace(self.tmpl.elementBuilderClass,"").replace("active-working","").trim()
+                    let elClass = (element.attr("class") ?? "")
+                                    .replace(self.tmpl.elementBuilderClass,"")
+                                    .replace("active-working","")
+                                    .trim()
                     $info.text(
                         (elTag + 
                         (elId !== "" ? "#" + elId : "") + 
@@ -537,8 +556,21 @@ version:
         self.pasteElement           = pasteElement;
         self.removeElement          = removeElement;
         self.toggleBuilderStyleView = toggleBuilderStyleView;
+        self.attachEventListener    = attachEventListener;
+        self.detachEventListener    = detachEventListener;
         //Initialize:
-        init();
+        return init();
     };
+
+    //Prototypes - mainly for convenience
+    PageBuilder.prototype.addEventListener = function(type, handler = function(){}) {
+        this.attachEventListener(type, handler);
+        return this;
+    };
+    PageBuilder.prototype.removeEventListener = function(type, handler = function(){}) {
+        this.detachEventListener(type, handler);
+        return this;
+    };
+    $.SikPageBuilder.build =  PageBuilder;
 
 })(jQuery);
