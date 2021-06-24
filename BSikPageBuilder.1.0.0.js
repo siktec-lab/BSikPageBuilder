@@ -412,7 +412,7 @@ version:
             let $appended = null;
             if (self.elements[group] && self.elements[group].elements[element]) {
                 $appended = $(
-                    self.elements[group].elements[element].html.replace("%build%", self.tpl.elementBuilderClass)
+                    self.elements[group].elements[element].html.replaceAll("%build%", self.tpl.elementBuilderClass)
                 ).appendTo($to);
                 tagElement($appended, element);
             } else {
@@ -650,12 +650,16 @@ version:
         // private methods
         let tagElement = function(_el, name = "") {
             let $el = $(_el);
-            let $tagging = $el.find("." + self.tpl.taggingClass);
+            let $tagging = $el.find(`.${self.tpl.taggingClass}`);
             if (!$tagging.length) {
-                $tagging = $(
-                    self.tpl.tagging.replace("%class%", self.tpl.taggingClass)
-                                     .replace("%tag%", ""))
-                                     .appendTo($el);
+                if ($el.hasClass(self.tpl.elementBuilderClass)) {
+                    let $tag = $(self.tpl.tagging.replace("%class%", self.tpl.taggingClass).replace("%tag%", ""));
+                    $tag.prependTo($el);
+                }
+                $el.find(`.${self.tpl.elementBuilderClass}`).each(function() {
+                    let $tag = $(self.tpl.tagging.replace("%class%", self.tpl.taggingClass).replace("%tag%", ""));
+                    $tag.prependTo($(this));
+                });
             }
         };
 
