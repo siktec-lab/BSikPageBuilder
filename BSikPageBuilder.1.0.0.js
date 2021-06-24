@@ -251,7 +251,7 @@ version:
             shrinkToSize(size) {
                 if (states.stack.length > size) { 
                     states.stack.shift();
-                    states.stack.pos--;
+                    states.pos--;
                 }
             },
             push : function(state = null) {
