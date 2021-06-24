@@ -114,6 +114,7 @@ version:
                         params: ["moveElement", "prev"],
                         stateOn:  "selected-element",
                         stateOff: "selected-root",
+                        saveBefore: true,
                         lang : {
                             english : { name : "Move Element Up", desc: "Move selected element up the hierarchy" },
                             french  : { name : "Move Element Up", desc: "Move selected element up the hierarchy" }
@@ -129,6 +130,7 @@ version:
                         params: ["moveElement", "next"],
                         stateOn:  "selected-element",
                         stateOff: "selected-root",
+                        saveBefore: true,
                         lang : {
                             english : { name : "Move Element Down", desc: "Move selected element down the hierarchy" },
                             french  : { name : "Move Element Down", desc: "Move selected element down the hierarchy" }
@@ -159,6 +161,7 @@ version:
                         params: ["cropElement"],
                         stateOn:  "selected-element",
                         stateOff: "selected-root",
+                        saveBefore: true,
                         lang : {
                             english : { name : "Cut Element", desc: "Cut Current Working Element" },
                             french  : { name : "Cut Element", desc: "Cut Current Working Element" }
@@ -174,6 +177,7 @@ version:
                         params: ["pasteElement"],
                         stateOn:  "clipboard-has",
                         stateOff: "clipboard-empty",
+                        saveBefore: true,
                         lang : {
                             english : { name : "Paste Element", desc: "Paste from clipboard" },
                             french  : { name : "Paste Element", desc: "Paste from clipboard" }
@@ -189,13 +193,44 @@ version:
                         params: ["removeElement"],
                         stateOn:  "selected-element",
                         stateOff: "selected-root",
+                        saveBefore: true,
                         lang : {
                             english : { name : "Remove Element", desc: "Remove selected element" },
                             french  : { name : "Remove Element", desc: "Remove selected element" }
                         }
                     },
+                    undoAction : {
+                        order: 9,
+                        state: false,
+                        name: "Undo",
+                        desc: "Undo last operation",
+                        icon: "fas fa-undo",
+                        run: "execute",
+                        params: ["recoverState", "undo"],
+                        stateOn:  "state-moveback",
+                        stateOff: "state-min",
+                        lang : {
+                            english : { name : "Undo", desc: "Undo last operation" },
+                            french  : { name : "Undo", desc: "Undo last operation" }
+                        }
+                    },
+                    redoAction : {
+                        order: 10,
+                        state: false,
+                        name: "Redo",
+                        desc: "Redo last operation",
+                        icon: "fas fa-redo",
+                        run: "execute",
+                        params: ["recoverState", "redo"],
+                        stateOn:  "state-moveforward",
+                        stateOff: "state-max",
+                        lang : {
+                            english : { name : "Redo", desc: "Redo last operation" },
+                            french  : { name : "Redo", desc: "Redo last operation" }
+                        }
+                    },
                     devider : { 
-                        order : 9
+                        order : 11
                     }
                 }
             }

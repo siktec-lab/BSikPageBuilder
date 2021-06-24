@@ -57,17 +57,21 @@ version:
         };
         
         let eventNames = {
-            viewStateBuilder    : "viewstate-builder",
-            viewStateNormal     : "viewstate-normal",
-            clipboardHasValue   : "clipboard-has",
-            clipboardNowEmpty   : "clipboard-empty",
-            copyElement         : "element-copy",
-            cropElement         : "element-crop",
-            pasteElement        : "element-paste",
-            removeElement       : "element-remove",
-            selectedElement     : "selected-element",
-            selectedRoot        : "selected-root",
-            moveElement         : "move-element"
+            viewStateBuilder        : "viewstate-builder",
+            viewStateNormal         : "viewstate-normal",
+            clipboardHasValue       : "clipboard-has",
+            clipboardNowEmpty       : "clipboard-empty",
+            stateCanMoveBack        : "state-moveback",
+            stateCanMoveForward     : "state-moveforward",
+            stateInMinPos           : "state-min",
+            stateInMaxPos           : "state-max",
+            copyElement             : "element-copy",
+            cropElement             : "element-crop",
+            pasteElement            : "element-paste",
+            removeElement           : "element-remove",
+            selectedElement         : "selected-element",
+            selectedRoot            : "selected-root",
+            moveElement             : "move-element"
         };
 
         let documentStyle   = [];
@@ -202,7 +206,84 @@ version:
                 }
             });
             return moved !== false;
-        }
+        };
+        let states = {
+            stack : [],
+            pos : -1,
+            get : function(shift = 0) {
+                return (states.pos + shift >= 0 && states.stack.length > states.pos + shift) 
+                    ? states.stack[states.pos + shift] 
+                    : false;
+            },
+            currentEqual : function(state) {
+                return states.get() ? state.hash === states.get().hash : false;
+            },
+            create : function() {
+                let state = {
+                    doc         : {
+                        head : self.$frame.find("head").html(),
+                        body : self.$doc.html()
+                    },
+                    hash        : 0,
+                    controls    : [],
+                    toolbars    : [],
+                    message     : self.$workingHeader.html(),
+                    working     : self.workingOn
+                };
+                self.$controls.each(function(i, e) { 
+                    state.controls.push({
+                        disabled : $(e).hasClass("disabled-control"),
+                        icon     : $(e).find("i").attr("class"),
+                        selected : $(e).hasClass("selected")
+                    });
+                });
+                self.$toolbars.each(function(i, e) { 
+                    state.toolbars.push({
+                        visible : $(e).is(":visible")
+                    });
+                });
+                state.hash = (state.doc.head + state.doc.body).hashCode();
+                return state;
+            },
+            trimToPos : function() {
+                return states.stack.splice(states.pos + 1);
+            },
+            shrinkToSize(size) {
+                if (states.stack.length > size) { 
+                    states.stack.shift();
+                    states.stack.pos--;
+                }
+            },
+            push : function(state = null) {
+                state = state ?? states.create();
+                let cur = states.get();
+                if (states.stack.length == 0) {
+                    states.stack.push(state);
+                    states.pos++;
+                    states.shrinkToSize(10);
+                    return true;
+                } else if (cur.hash !== state.hash) {
+                    states.trimToPos();
+                    states.stack.push(state);
+                    states.pos++;
+                    states.shrinkToSize(10);
+                    return true;
+                }
+                return false;
+            },
+            raise : function() {
+                if (states.stack.length && states.pos < 0) {
+                    raiseEvent(eventNames.stateInMinPos);
+                } else if (states.stack.length && states.pos >= 0) {
+                    raiseEvent(eventNames.stateCanMoveBack);
+                }
+                if (states.stack.length && states.pos >= states.stack.length - 1) {
+                    raiseEvent(eventNames.stateInMaxPos);
+                } else if (states.stack.length && states.pos >= -1) {
+                    raiseEvent(eventNames.stateCanMoveForward);
+                }
+            }
+        };
 
         /************************************************************************************
          * PUBLIC ACTION METHODS
@@ -233,6 +314,32 @@ version:
         let currentWorking = function() {
             return self.workingOn != "" && self.workingOn.length ? self.workingOn : null;
         };
+        let recoverState = function(op = "undo") {
+            if (op === "undo" && states.pos >= states.stack.length - 1) {
+                states.push();
+                states.pos = states.stack.length - 2;
+            } else if (op === "undo" && states.pos > -1) {
+                states.pos--;
+            }
+            if (op === "redo" && states.pos <= -1 && states.stack.length) {
+                states.pos = 1;
+            } else if (op === "redo" && states.pos < states.stack.length - 1) {
+                states.pos++;
+            }
+            let restore = states.get();
+            if (restore) {
+                /* SH: added - 2021-06-25 => this will restore head includes and all -> will be remade and broken into pieces later */
+                //self.$frame.find("head").html(restore.doc.head);
+                self.$doc.html(restore.doc.body);
+                self.workingOn = self.$doc.find(".active-working");
+                raiseEvent(self.workingOn.hasClass("active-working") ? eventNames.selectedElement : eventNames.selectedRoot);
+                if (op === "undo" && states.pos === 0) {
+                    states.pos = -1;
+                }
+                return true;
+            }
+            return false;
+        }
         let copyElement = function(_ele = null) {
             let $eles = $(_ele ?? this.currentWorking());
             if ($eles.hasClass(self.tpl.elementBuilderClass)) {
@@ -503,14 +610,22 @@ version:
         let attachControlEvent = function($control, userFunc) {
             if (typeof userFunc === "function") {
                 $control.on("click", function() {
+                    if ($(this).hasClass("disabled-control")) return;
+                    if ($(this).data("definition").saveBefore) {
+                        self.saveState();
+                    }
                     let params = $(this).clone().data("params") ?? [];
                     params.unshift(this);
                     userFunc.apply(self, params);
                 });
             } else {
                 $control.on("click", function() {
+                    if ($(this).hasClass("disabled-control")) return;
                     let handler = self.handlers[$(this).data("run")];
                     let params = $(this).clone().data("params") ?? [];
+                    if ($(this).data("definition").saveBefore) {
+                        self.saveState();
+                    }
                     if (typeof handler === "function") {
                         params.unshift(this);
                         handler.apply(self, params);
@@ -603,6 +718,10 @@ version:
         self.setCurrentWorking      = setCurrentWorking;
         self.currentWorking         = currentWorking;
         self.messageBar             = messageBar;
+        self.recoverState           = function(dir) {
+            recoverState(dir); 
+            states.raise();
+        };
         self.copyElement            = copyElement;
         self.cropElement            = cropElement;
         self.pasteElement           = pasteElement;
@@ -612,22 +731,50 @@ version:
         self.toggleBuilderStyleView = toggleBuilderStyleView;
         self.attachEventListener    = attachEventListener;
         self.detachEventListener    = detachEventListener;
+        self.detachEventListener    = detachEventListener;
+        self.getState               = states.create;
+        self.saveState              = function() {
+            if (states.push()) states.raise();
+        };
+            
         //Initialize:
         return init();
     };
 
-    //Prototypes - mainly for convenience and naming like compatability:
+    //Prototypes helper tools:
+    Object.defineProperty(String.prototype, 'hashCode', {
+        enumerable: false,
+        value: function() {
+            let hash = 0, chr;
+            if (this.length === 0) return hash;
+            for (let i = 0; i < this.length; i++) {
+              chr   = this.charCodeAt(i);
+              hash  = ((hash << 5) - hash) + chr;
+              hash |= 0; // Convert to 32bit integer
+            }
+            return hash;
+        }
+    });
+
+    Object.defineProperty(Array.prototype, 'getLast', {
+        enumerable: false,
+        value: function(){
+            return this[this.length - 1];
+        }
+    });
+    
+    //Prototypes - Mainly for convenience and naming and backword compatability:
     PageBuilder.prototype.addEventListener = function(type, handler = function(){}) {
         this.attachEventListener(type, handler);
         return this;
     };
-    PageBuilder.prototype.removeEventListener = function(type, handler = function(){}) {
-        this.detachEventListener(type, handler);
+    PageBuilder.prototype.removeEventListener = function(type) {
+        this.detachEventListener(type);
         return this;
     };
     PageBuilder.prototype.hasEventName = function(eventName = "") {
         return Object.values(this.eventNames).filter((name)=> name === eventName).length ? true : false;
-    }
+    };
     $.SikPageBuilder.build =  PageBuilder;
 
 })(jQuery);
