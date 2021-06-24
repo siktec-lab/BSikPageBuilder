@@ -51,7 +51,7 @@ version:
         
         self.tpl = {
             taggingClass        : "sik-tagging",
-            tagging             : "<div class='%class%'>%tag%</div>",
+            tagging             : "<span class='%class%'>%tag%</span>",
             elementBuilderClass : "struct-ele",
             controlsDevider     : "<li class='control-devider'></li>"
         };

@@ -85,7 +85,7 @@ version:
                             order: 7,
                             name: "Inline Text",
                             desc: "Basic inline text element",
-                            html: "<span class='%build%'></span>",
+                            html: "<span class='%build%'>Lorem Ipsum</span>",
                             icon: "fas fa-vector-square",
                             lang : {},
                         },
@@ -107,7 +107,7 @@ version:
                         },
                         image: {
                             order: 10,
-                            name: "List Row",
+                            name: "Image",
                             desc: "Basic list row element",
                             html: "<img src='' class='%build%'/>",
                             icon: "fas fa-vector-square",
